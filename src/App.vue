@@ -3,7 +3,7 @@
     class="app-container flex flex-column h-screen overflow-hidden bg-surface-50"
   >
     <!-- 主内容区域 -->
-    <main class="main-content flex-1 overflow-y-auto">
+    <main class="main-content flex-1 flex flex-column overflow-hidden">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" />
@@ -13,7 +13,7 @@
 
     <!-- 底部导航栏 -->
     <nav
-      class="bottom-nav fixed bottom-0 left-0 w-full h-5rem bg-surface-0 flex justify-content-around align-items-center z-5"
+      class="bottom-nav w-full h-5rem bg-surface-0 flex justify-content-around align-items-center z-5 shadow-5"
     >
       <NavItem to="/calendar" icon="pi-calendar" label="日历" />
       <NavItem to="/chat" icon="pi-comments" label="聊天" />
@@ -25,10 +25,6 @@
 </template>
 
 <style scoped>
-.main-content {
-  padding-bottom: 5rem; /* 对应导航栏高度 */
-}
-
 .bottom-nav {
   transition: box-shadow 0.3s ease;
 }
