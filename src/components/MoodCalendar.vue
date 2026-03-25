@@ -1,16 +1,51 @@
 <script setup>
 import { ref, computed } from "vue";
 
+const moodData = {
+  23: "活力",
+  22: "喜悦",
+  21: "宁静",
+  20: "疲惫",
+  19: "忧郁",
+  18: "生气",
+  17: "焦虑",
+  16: "期待",
+  15: "伤心",
+  14: "轻松",
+};
+
 const moodTypes = [
-  { type: "活力", color: "var(--p-orange-500)" },
-  { type: "喜悦", color: "var(--p-pink-500)" },
-  { type: "宁静", color: "var(--p-fuchsia-500)" },
-  { type: "疲惫", color: "var(--p-zinc-500)" },
-  { type: "忧郁", color: "var(--p-indigo-500)" },
+  { type: "活力", color: "#FFD8A8" },
+  { type: "喜悦", color: "#FFD1DC" },
+  { type: "宁静", color: "#E1BEE7" },
+  { type: "疲惫", color: "#FFE4E1" },
+  { type: "忧郁", color: "#ECEFF1" },
+  { type: "生气", color: "#FFCDD2" },
+  { type: "焦虑", color: "#FFF9C4" },
+  { type: "期待", color: "#DCEDC8" },
+  { type: "伤心", color: "#F5F5F5" },
+  { type: "轻松", color: "#B2EBF2" },
 ];
 const getMoodColor = (mood) => {
   const moodInfo = moodTypes.find((m) => m.type === mood);
   return moodInfo ? moodInfo.color : "transparent";
+};
+const getMoodCellClass = (day) => {
+  // 如果是选中的日期，返回主题色背景
+  if (day === theDay.value) {
+    if (moodData[day]) {
+      return "border-2 border-primary-400";
+    }
+    return "bg-primary-100 border-2 border-primary-400";
+  }
+  return `hover:surface-100`;
+};
+
+const getMoodCellStyle = (day) => {
+  const mood = moodData[day];
+  return {
+    backgroundColor: getMoodColor(mood),
+  };
 };
 
 // 日历基础数据
@@ -36,23 +71,6 @@ const isCurrentMonth = computed(() => {
 
 const selectDay = (day) => {
   theDay.value = day;
-};
-
-const getMoodForDate = (day) => {
-  const moodData = {
-    23: { type: "活力", color: "var(--p-orange-500)" },
-    22: { type: "喜悦", color: "var(--p-pink-500)" },
-    21: { type: "宁静", color: "var(--p-fuchsia-500)" },
-    20: { type: "疲惫", color: "var(--p-zinc-500)" },
-    19: { type: "忧郁", color: "var(--p-indigo-500)" },
-  };
-  if (moodData[day]) {
-    console.log(
-      `获取到 ${theYear.value}年${theMonth.value}月${day}日 的心情数据:`,
-      moodData[day],
-    );
-  }
-  return moodData[day] || null;
 };
 
 // 月份切换逻辑
@@ -133,6 +151,7 @@ const monthGoForward = () => {
           style="width: 14.28%"
         ></div>
 
+        <!-- 日期格 -->
         <div
           v-for="i in daysInMonth"
           :key="i"
@@ -143,27 +162,19 @@ const monthGoForward = () => {
             @click="selectDay(i)"
             :class="[
               'date-cell w-full aspect-square border-round-xl flex flex-column align-items-center justify-content-center cursor-pointer transition-all relative',
-              theDay === i
-                ? 'bg-primary-100 border-2 border-primary-400'
-                : 'bg-transparent hover:surface-100',
+              getMoodCellClass(i),
             ]"
+            :style="getMoodCellStyle(i)"
           >
             <span
               class="text-sm font-bold z-1"
-              :class="theDay === i ? 'text-primary-700' : 'text-gray-700'"
+              :class="
+                theDay === i && !moodData[i]
+                  ? 'text-primary-700'
+                  : 'text-gray-700'
+              "
               >{{ i }}</span
             >
-            <!-- 心情圆点 -->
-            <div
-              v-if="getMoodForDate(i)"
-              class="mood-dot w-2 h-2 border-circle mt-1"
-              :style="{ backgroundColor: getMoodForDate(i).color }"
-            ></div>
-            <!-- 装饰背景 -->
-            <div
-              v-if="theDay === i"
-              class="absolute inset-0 bg-primary-500 opacity-10 border-round-xl"
-            ></div>
           </div>
         </div>
       </div>
