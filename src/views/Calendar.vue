@@ -1,8 +1,21 @@
 <script setup>
 import { ref } from "vue";
 
-const selectedDate = ref(23);
+const calenderRef = ref(null);
 const isPublic = ref(false);
+
+const moodData = {
+  23: "活力",
+  22: "喜悦",
+  21: "宁静",
+  20: "疲惫",
+  19: "忧郁",
+  18: "生气",
+  17: "焦虑",
+  16: "期待",
+  15: "伤心",
+  14: "轻松",
+};
 
 const getAIReviewForDate = (day) => {
   const reviews = {
@@ -11,6 +24,9 @@ const getAIReviewForDate = (day) => {
     default:
       "这一天你留下了深沉而宁静的回响。AI 观察到你在平衡学业与自我关怀方面做得很好。",
   };
+  if (!isExperienced()) {
+    return "未来的一切都充满了未知和可能，希望你能在人生这个旅程中保持好奇和开放的心态。";
+  }
   return reviews[day] || reviews.default;
 };
 
@@ -19,6 +35,30 @@ const getRecommendation = (day) => {
     activity: day % 2 === 0 ? "在荷花池边冥想" : "去图书馆五楼看落日",
     food: day % 3 === 0 ? "三食堂的瓦罐汤" : "清真餐厅的牛肉拉面",
   };
+};
+
+const isToday = () => {
+  if (!calenderRef.value) {
+    return false;
+  }
+  const today = new Date();
+  const selectedDate = calenderRef.value.getSelectedDate();
+  return (
+    today.getFullYear() === selectedDate.getFullYear() &&
+    today.getMonth() === selectedDate.getMonth() &&
+    today.getDate() === selectedDate.getDate()
+  );
+};
+
+const isExperienced = () => {
+  if (!calenderRef.value) {
+    return false;
+  }
+  const today = new Date();
+  const selectedDate = calenderRef.value.getSelectedDate();
+  const diffTime = today - selectedDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays >= 0;
 };
 </script>
 
@@ -30,10 +70,10 @@ const getRecommendation = (day) => {
       subtitle="回顾你的丁香足迹，感受情绪起伏"
     />
     <div class="calendar-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
-      <MoodCalendar />
+      <MoodCalendar :value="moodData" ref="calenderRef" />
 
       <!-- 心理总结卡片 -->
-      <section v-if="selectedDate" class="animate-fadein">
+      <section v-if="calenderRef" class="animate-fadein">
         <Card
           class="border-round-3xl shadow-2 overflow-hidden border-none relative"
         >
@@ -48,7 +88,9 @@ const getRecommendation = (day) => {
                   <i class="pi pi-bolt text-primary text-xl"></i>
                 </div>
                 <h3 class="m-0 text-lg font-bold text-gray-800">
-                  3月{{ selectedDate }}日 心理总结
+                  {{ calenderRef.getSelectedMonth() }}月{{
+                    calenderRef.getSelectedDay()
+                  }}日 心理总结
                 </h3>
               </div>
               <div class="flex align-items-center gap-2">
@@ -60,10 +102,10 @@ const getRecommendation = (day) => {
             <p
               class="text-color-secondary line-height-3 italic mb-5 px-1 border-left-3 border-primary-200 pl-3"
             >
-              "{{ getAIReviewForDate(selectedDate) }}"
+              "{{ getAIReviewForDate(calenderRef.getSelectedDay()) }}"
             </p>
 
-            <div class="grid">
+            <div v-if="isToday()" class="grid">
               <div class="col-6">
                 <div
                   class="p-3 bg-blue-50 border-round-2xl border-1 border-blue-100 shadow-sm"
@@ -74,7 +116,9 @@ const getRecommendation = (day) => {
                     <i class="pi pi-map-marker mr-1"></i> 建议活动
                   </div>
                   <div class="text-sm text-blue-900 font-medium">
-                    {{ getRecommendation(selectedDate).activity }}
+                    {{
+                      getRecommendation(calenderRef.getSelectedDay()).activity
+                    }}
                   </div>
                 </div>
               </div>
@@ -88,7 +132,7 @@ const getRecommendation = (day) => {
                     <i class="pi pi-heart mr-1"></i> 今日美食
                   </div>
                   <div class="text-sm text-pink-900 font-medium">
-                    {{ getRecommendation(selectedDate).food }}
+                    {{ getRecommendation(calenderRef.getSelectedDay()).food }}
                   </div>
                 </div>
               </div>

@@ -1,18 +1,13 @@
 <script setup>
 import { ref, computed } from "vue";
 
-const moodData = {
-  23: "活力",
-  22: "喜悦",
-  21: "宁静",
-  20: "疲惫",
-  19: "忧郁",
-  18: "生气",
-  17: "焦虑",
-  16: "期待",
-  15: "伤心",
-  14: "轻松",
-};
+const props = defineProps({
+  value: {
+    type: Object,
+    required: true,
+  },
+});
+const moodData = computed(() => props.value || {});
 
 const moodTypes = [
   { type: "活力", color: "#FFD8A8" },
@@ -33,7 +28,7 @@ const getMoodColor = (mood) => {
 const getMoodCellClass = (day) => {
   // 如果是选中的日期，返回主题色背景
   if (day === theDay.value) {
-    if (moodData[day]) {
+    if (moodData.value[day]) {
       return "border-2 border-primary-400";
     }
     return "bg-primary-100 border-2 border-primary-400";
@@ -42,7 +37,7 @@ const getMoodCellClass = (day) => {
 };
 
 const getMoodCellStyle = (day) => {
-  const mood = moodData[day];
+  const mood = moodData.value[day];
   return {
     backgroundColor: getMoodColor(mood),
   };
@@ -100,6 +95,25 @@ const monthGoForward = () => {
     theDay.value = 1;
   }
 };
+
+// 对外接口
+const getSelectedDate = () =>
+  new Date(theYear.value, theMonth.value - 1, theDay.value);
+const getSelectedDateStr = () => {
+  const pad = (num) => String(num).padStart(2, "0");
+  return `${theYear.value}-${pad(theMonth.value)}-${pad(theDay.value)}`;
+};
+const getSelectedYear = () => theYear.value;
+const getSelectedMonth = () => theMonth.value;
+const getSelectedDay = () => theDay.value;
+
+defineExpose({
+  getSelectedDate,
+  getSelectedDateStr,
+  getSelectedYear,
+  getSelectedMonth,
+  getSelectedDay,
+});
 </script>
 
 <template>
