@@ -1,0 +1,13 @@
+# venv environment
+.venv/
+
+# python cache
+__pycache__/
+*.py[co]
+
+# uv cache
+uv.lock
+.python-version
+
+# runtime datas
+datas/
