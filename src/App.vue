@@ -22,6 +22,8 @@
       <NavItem to="/profile" icon="pi-user" label="我的" />
     </nav>
   </div>
+  <ConfirmDialog />
+  <Toast />
 </template>
 
 <style scoped>

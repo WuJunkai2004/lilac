@@ -10,6 +10,7 @@ import "primeflex/primeflex.css";
 import "primeicons/primeicons.css";
 
 import ConfirmationService from "primevue/confirmationservice";
+import ToastService from "primevue/toastservice";
 
 import { definePreset } from "@primeuix/themes";
 const Fuchsia = definePreset(Aura, {
@@ -39,5 +40,6 @@ app.use(PrimeVue, {
   },
 });
 app.use(ConfirmationService);
+app.use(ToastService);
 
 app.mount("#app");
