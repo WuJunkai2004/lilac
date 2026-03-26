@@ -1,5 +1,5 @@
 {
-  "name": "disk-kg-webui",
+  "name": "lilac-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
-    "preview": "vite preview"
+    "debug": "vite --host --mode debug",
+    "build": "vite build"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
