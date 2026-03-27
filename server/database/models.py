@@ -1,6 +1,7 @@
 import datetime
 
 from peewee import (
+    AutoField,
     BooleanField,
     CharField,
     Check,
@@ -22,7 +23,8 @@ class BaseModel(Model):
 
 
 class Image(BaseModel):
-    file_path = TextField()  # 存储图片文件名（如 xxx.webp）
+    img_id = AutoField()
+    name = TextField()  # 存储图片的名称（如 xxx）
     created_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:  # type: ignore
@@ -32,7 +34,7 @@ class Image(BaseModel):
 class User(BaseModel):
     username = CharField(unique=True)
     password_hash = CharField()
-    avatar = ForeignKeyField(Image, null=True, backref="users")
+    avatar = ForeignKeyField(Image, null=False, column_name="avatar", backref="users")
     session_token = CharField(unique=True, null=True)
     token_expires_at = DateTimeField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
@@ -53,10 +55,10 @@ class MoodType(BaseModel):
 class Letter(BaseModel):
     user = ForeignKeyField(User, backref="letters")
     content = TextField(null=True)
-    image = ForeignKeyField(Image, null=True, backref="letters")
+    image = ForeignKeyField(Image, null=True, column_name="image", backref="letters")
     latitude = FloatField()
     longitude = FloatField()
-    location_name = CharField(null=True)
+    location = CharField()
     likes_count = IntegerField(default=0)
     view_count = IntegerField(default=0)
     is_public = BooleanField(default=True)
@@ -113,3 +115,33 @@ class ChatMessage(BaseModel):
     class Meta:  # type: ignore
         table_name = "chat_messages"
         constraints = [Check("role IN ('user', 'assistant')")]
+
+
+class SchoolMoodSummary(BaseModel):
+    mood_name = CharField()
+    color_code = CharField()
+    element_type = CharField()
+    count = IntegerField()
+    summary_date = DateField()
+
+    class Meta:  # type: ignore
+        table_name = "v_school_mood_summary"
+        primary_key = False
+
+
+class PublicLetterFlow(BaseModel):
+    id = IntegerField()
+    content = TextField()
+    image_url = CharField()
+    latitude = FloatField()
+    longitude = FloatField()
+    location = CharField()
+    likes_count = IntegerField()
+    view_count = IntegerField()
+    created_at = DateTimeField()
+    username = CharField()
+    avatar_url = CharField()
+
+    class Meta:  # type: ignore
+        table_name = "v_public_letter_flow"
+        primary_key = False
