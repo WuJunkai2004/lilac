@@ -34,7 +34,7 @@ class Image(BaseModel):
 class User(BaseModel):
     username = CharField(unique=True)
     password_hash = CharField()
-    avatar = ForeignKeyField(Image, null=False, column_name="avatar", backref="users")
+    avatar = ForeignKeyField(Image, null=True, column_name="avatar", backref="users")
     session_token = CharField(unique=True, null=True)
     token_expires_at = DateTimeField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)

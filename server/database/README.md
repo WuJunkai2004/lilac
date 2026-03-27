@@ -24,7 +24,7 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    avatar INTEGER NOT NULL,                 -- 头像id，通过关联 images 表获取完整路径
+    avatar INTEGER,                  -- 头像id，通过关联 images 表获取完整路径
     -- Session 整合字段 (单设备登录模式)
     session_token TEXT UNIQUE,       -- 登录 Token (UUID)
     token_expires_at DATETIME,       -- Token 过期时间
