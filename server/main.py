@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from server.api.auth import router as auth_router
+from server.api.chat import router as chat_router
 from server.api.image import router as image_router
 from server.database.setup import setup
 from server.utils.logger import log
@@ -22,6 +23,7 @@ app = FastAPI(title="Lilac Backend API", lifespan=lifespan)
 
 # 挂载路由
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(chat_router, prefix="/api/chat", tags=["Chat System"])
 app.include_router(image_router, prefix="/image", tags=["Image Resources"])
 
 

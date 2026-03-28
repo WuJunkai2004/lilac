@@ -25,9 +25,6 @@ class AuthResponse(BaseModel):
     message: Optional[str] = None
 
 
-# --- 工具函数 ---
-
-
 def get_password_hash(password: str) -> str:
     """简单的 SHA-256 密码哈希，生产环境建议使用 passlib[bcrypt]"""
     return hashlib.sha256(password.encode()).hexdigest()
