@@ -1,9 +1,10 @@
 import hashlib
+import re
 import secrets
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from server.database.connect import Database
 from server.database.models import User
@@ -13,8 +14,18 @@ router = APIRouter()
 
 
 class AuthRequest(BaseModel):
-    username: str
-    password: str
+    # 只能有字母、数字和下划线，且长度为5-15
+    username: str = Field(..., pattern=r"^[a-zA-Z0-9_]{5,15}$")
+    # 密码长度限制 8-31，具体正则由 validator 处理
+    password: str = Field(..., min_length=8, max_length=31)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        # Pydantic pattern 不支持 lookahead，改用 re 模块
+        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,31}$", v):
+            raise ValueError("密码必须至少包含一个字母和一个数字")
+        return v
 
 
 def get_password_hash(password: str) -> str:
