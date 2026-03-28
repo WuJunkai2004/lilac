@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlert } from "#/alert";
 import storage from "#/storage";
+import { resCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
@@ -27,7 +28,7 @@ const isValid = () => {
     return false;
   }
 
-  // 只能有字母、数字和下划线，且长度为3-16
+  // 只能有字母、数字和下划线，且长度为5-16
   const usernameRegex = /^[a-zA-Z0-9_]{5,15}$/;
   // 密码必须至少8位，包含至少一个字母和一个数字
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,31}$/; // 最少8位，至少1个字母和1个数字
@@ -60,14 +61,20 @@ const register = () => {
       password: password.value,
     }),
   })
-    .then((res) => res.json())
-    .then(async (data) => {
-      if (data.success) {
-        await storage.set("token", data.token, 0);
-        shows("注册成功", "欢迎加入，" + data.username + "！");
+    .then(resCheck)
+    .then(async (res) => {
+      if (res.success) {
+        await storage.set("token", res.data.token, 0);
+        await storage.set("user", res.data.username, 0);
+        await storage.set(
+          "avatar",
+          res.data.avatar_url || "/image/avatar.webp",
+          0,
+        );
+        shows("注册成功", "欢迎加入，" + res.data.username + "！");
         router.push("/profile");
       } else {
-        alerts("注册失败", data.message || "用户名已存在");
+        alerts("注册失败", res.message || "用户名已存在");
       }
     })
     .catch(() => {

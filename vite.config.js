@@ -45,6 +45,10 @@ export default defineConfig(({ mode }) => {
           target: env.dev_backend,
           changeOrigin: true,
         },
+        "/image": {
+          target: env.dev_backend,
+          changeOrigin: true,
+        },
       },
     };
   }

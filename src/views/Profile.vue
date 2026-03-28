@@ -40,11 +40,13 @@ const settings = [
 ];
 
 const loadUser = async () => {
-  
   const savedUser = await storage.get("user");
   console.log("加载用户信息:", savedUser);
   if (savedUser) {
-    user.value = JSON.parse(savedUser);
+    user.value = {
+      username: savedUser,
+      avatar: await storage.get("avatar"),
+    };
   } else {
     user.value = null;
     router.push("/login");

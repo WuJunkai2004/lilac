@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlert } from "#/alert";
 import storage from "#/storage";
+import { resCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
@@ -30,16 +31,20 @@ const login = () => {
       password: password.value,
     }),
   })
-    .then((res) => res.json())
-    .then(async (data) => {
-      if (data.success) {
-        await storage.set("token", data.token, 0);
-        await storage.set("user", data.username, 0);
-        await storage.set("avatar", data.avatar || "/image/avatar.webp", 0);
-        shows("登录成功", "欢迎回来，" + data.username + "！");
+    .then(resCheck)
+    .then(async (res) => {
+      if (res.success) {
+        await storage.set("token", res.data.token, 0);
+        await storage.set("user", res.data.username, 0);
+        await storage.set(
+          "avatar",
+          res.data.avatar_url || "/image/avatar.webp",
+          0,
+        );
+        shows("登录成功", "欢迎回来，" + res.data.username + "！");
         router.push("/profile");
       } else {
-        alerts("登录失败", data.message || "用户名或密码错误");
+        alerts("登录失败", res.message || "用户名或密码错误");
       }
     })
     .catch(() => {
