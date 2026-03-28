@@ -30,6 +30,12 @@ const routes = [
     component: () => import("@/views/Scenery.vue"),
   },
   {
+    // 风景编辑页面，用户可以上传和编辑自己的风景图片，作为情绪日记的一部分。
+    path: "/scenery/edit",
+    name: "SceneryEdit",
+    component: () => import("@/views/SceneryEdit.vue"),
+  },
+  {
     // 用户个人资料页面，用户可以查看和编辑自己的信息。
     path: "/profile",
     name: "Profile",

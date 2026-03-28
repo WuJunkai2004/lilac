@@ -1,9 +1,8 @@
 <script setup>
 import { ref } from "vue";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { useRouter } from "vue-router";
 
-const capturedImage = ref(null);
-const letterText = ref("");
+const router = useRouter();
 const selectedLetter = ref(null);
 const showDetails = ref(false);
 
@@ -49,29 +48,6 @@ const recentLetters = ref([
   },
 ]);
 
-const takePhoto = async () => {
-  try {
-    const image = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
-    });
-    capturedImage.value = image.webPath;
-  } catch (error) {
-    console.error("Camera failed:", error);
-  }
-};
-
-const shareLetter = () => {
-  if (!letterText.value.trim()) {
-    console.warn("请写点什么吧");
-    return;
-  }
-  capturedImage.value = null;
-  letterText.value = "";
-};
-
 const viewLetter = (letter) => {
   selectedLetter.value = letter;
   showDetails.value = true;
@@ -98,67 +74,11 @@ const viewLetter = (letter) => {
       <!-- 校园地图 -->
       <SchoolMap :pins="mockPins" @pin-click="viewLetter" class="mb-5" />
 
-      <!-- 拍摄后的编辑区域 -->
-      <div v-if="capturedImage" class="edit-letter-section animate-fadein">
-        <Card
-          class="mb-5 border-round-3xl shadow-4 overflow-hidden border-none"
-        >
-          <template #header>
-            <div class="relative">
-              <img
-                :src="capturedImage"
-                alt="Captured Photo"
-                class="w-full block"
-              />
-              <Button
-                icon="pi pi-times"
-                rounded
-                severity="secondary"
-                @click="capturedImage = null"
-                class="absolute top-0 right-0 m-3 w-2.5rem h-2.5rem bg-black-alpha-50 text-white backdrop-blur-sm border-none hover:bg-black-alpha-60 transition-colors"
-              />
-              <Tag
-                value="图书馆前广场"
-                icon="pi pi-map-marker"
-                class="absolute bottom-0 left-0 m-3 bg-black-alpha-40 text-white backdrop-blur-sm px-3 py-1 border-none font-medium"
-              />
-            </div>
-          </template>
-          <template #content>
-            <Textarea
-              v-model="letterText"
-              rows="3"
-              placeholder="此刻你的心情如何？"
-              autoResize
-              class="w-full border-none shadow-none text-lg text-surface-800 bg-transparent p-0 focus:shadow-none"
-            />
-          </template>
-          <template #footer>
-            <Divider />
-            <div class="flex justify-content-between align-items-center mt-2">
-              <div
-                class="flex align-items-center gap-2 cursor-pointer hover:text-primary transition-colors"
-              >
-                <i class="pi pi-tag text-surface-400"></i>
-                <span class="text-xs text-surface-400 font-bold">添加标签</span>
-              </div>
-              <Button
-                label="分享信笺"
-                icon="pi pi-share-alt"
-                rounded
-                @click="shareLetter"
-                class="px-5 shadow-2"
-              />
-            </div>
-          </template>
-        </Card>
-      </div>
-
       <!-- 默认展示大家的分享 -->
-      <div v-else>
+      <div>
         <div class="flex flex-column gap-3 mb-6">
           <Button
-            @click="takePhoto"
+            @click="router.push('/scenery/edit')"
             class="w-full py-5 border-round-3xl shadow-3 transition-all transform active:scale-95 flex align-items-center justify-content-center"
           >
             <i class="pi pi-camera text-3xl mr-3"></i>

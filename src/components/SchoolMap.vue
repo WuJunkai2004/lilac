@@ -72,10 +72,9 @@ defineEmits(["pin-click", "map-click"]);
   transform: translate(-50%, -100%);
   transform-origin: bottom center;
   transition: transform 0.2s ease-out;
-}
-
-.pin-marker:hover {
-  transform: translate(-50%, -100%) scale(1.25);
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .z-20 {
