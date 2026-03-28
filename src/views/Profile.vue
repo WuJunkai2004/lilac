@@ -1,3 +1,69 @@
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import storage from "#/storage";
+
+const router = useRouter();
+const user = ref(null);
+
+const settings = [
+  {
+    label: "账号安全",
+    icon: "pi pi-shield",
+    color: "text-blue-500",
+    bg: "bg-blue-50",
+  },
+  {
+    label: "隐私设置",
+    icon: "pi pi-lock",
+    color: "text-green-500",
+    bg: "bg-green-50",
+  },
+  {
+    label: "我的成就",
+    icon: "pi pi-trophy",
+    color: "text-yellow-500",
+    bg: "bg-yellow-50",
+  },
+  {
+    label: "活动地点推荐",
+    icon: "pi pi-map-marker",
+    color: "text-red-500",
+    bg: "bg-red-50",
+  },
+  {
+    label: "关于 lilac echoes",
+    icon: "pi pi-info-circle",
+    color: "text-fuchsia-500",
+    bg: "bg-fuchsia-50",
+  },
+];
+
+const loadUser = async () => {
+  
+  const savedUser = await storage.get("user");
+  console.log("加载用户信息:", savedUser);
+  if (savedUser) {
+    user.value = JSON.parse(savedUser);
+  } else {
+    user.value = null;
+    router.push("/login");
+  }
+};
+
+onMounted(loadUser);
+
+const logout = async () => {
+  await storage.remove("user");
+  await loadUser();
+  router.push("/login");
+};
+
+const changeAvatar = () => {
+  alert("此处将调用摄像头/相册修改头像");
+};
+</script>
+
 <template>
   <div class="profile-page p-4 bg-surface-50 h-full overflow-y-auto">
     <header class="mb-5 flex align-items-center justify-content-between">
@@ -108,70 +174,6 @@
     </section>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import storage from "#/storage";
-
-const router = useRouter();
-const user = ref(null);
-
-const settings = [
-  {
-    label: "账号安全",
-    icon: "pi pi-shield",
-    color: "text-blue-500",
-    bg: "bg-blue-50",
-  },
-  {
-    label: "隐私设置",
-    icon: "pi pi-lock",
-    color: "text-green-500",
-    bg: "bg-green-50",
-  },
-  {
-    label: "我的成就",
-    icon: "pi pi-trophy",
-    color: "text-yellow-500",
-    bg: "bg-yellow-50",
-  },
-  {
-    label: "活动地点推荐",
-    icon: "pi pi-map-marker",
-    color: "text-red-500",
-    bg: "bg-red-50",
-  },
-  {
-    label: "关于 lilac echoes",
-    icon: "pi pi-info-circle",
-    color: "text-fuchsia-500",
-    bg: "bg-fuchsia-50",
-  },
-];
-
-const loadUser = async () => {
-  const savedUser = await storage.get("user");
-  if (savedUser) {
-    user.value = JSON.parse(savedUser);
-  } else {
-    user.value = null;
-    router.push("/login");
-  }
-};
-
-onMounted(loadUser);
-
-const logout = async () => {
-  await storage.remove("user");
-  await loadUser();
-  router.push("/login");
-};
-
-const changeAvatar = () => {
-  alert("此处将调用摄像头/相册修改头像");
-};
-</script>
 
 <style scoped>
 .surface-card {
