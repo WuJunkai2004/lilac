@@ -45,3 +45,4 @@ desktop.ini
 
 # development environment files
 .env
+api.md
