@@ -8,28 +8,16 @@ const user = ref(null);
 
 const settings = [
   {
-    label: "账号安全",
-    icon: "pi pi-shield",
-    color: "text-blue-500",
-    bg: "bg-blue-50",
-  },
-  {
-    label: "隐私设置",
-    icon: "pi pi-lock",
-    color: "text-green-500",
-    bg: "bg-green-50",
-  },
-  {
-    label: "我的成就",
-    icon: "pi pi-trophy",
+    label: "我的信笺",
+    icon: "pi pi-envelope",
     color: "text-yellow-500",
     bg: "bg-yellow-50",
   },
   {
-    label: "活动地点推荐",
-    icon: "pi pi-map-marker",
-    color: "text-red-500",
-    bg: "bg-red-50",
+    label: "用户设置",
+    icon: "pi pi-cog",
+    color: "text-blue-500",
+    bg: "bg-blue-50",
   },
   {
     label: "关于 lilac echoes",
@@ -153,11 +141,6 @@ const changeAvatar = () => {
     </div>
 
     <section v-if="user">
-      <h3
-        class="mb-4 text-lg font-bold border-left-4 border-primary pl-3 text-surface-800"
-      >
-        设置与工具
-      </h3>
       <div class="flex flex-column gap-3">
         <div
           v-for="item in settings"
