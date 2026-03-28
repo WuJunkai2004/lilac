@@ -20,6 +20,17 @@ async function generateDocs() {
     }
     const openApiData = await response.json();
 
+    // Remove 422 Validation Error from all paths
+    if (openApiData.paths) {
+      for (const path in openApiData.paths) {
+        for (const method in openApiData.paths[path]) {
+          if (openApiData.paths[path][method].responses) {
+            delete openApiData.paths[path][method].responses["422"];
+          }
+        }
+      }
+    }
+
     console.log("Generating Markdown...");
     const markdown = await createMarkdownFromOpenApi(openApiData);
 
