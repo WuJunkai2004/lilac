@@ -1,11 +1,18 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel
 
 from server.database.connect import Database
 from server.database.models import ChatMessage, ChatSession, User
+from server.schema.chat import (
+    ChatActionResponse,
+    ChatHistoryData,
+    ChatHistoryResponse,
+    ChatMessageData,
+    ChatResponse,
+)
 
 router = APIRouter()
 
@@ -15,34 +22,18 @@ class ChatRequest(BaseModel):
     session_type: str  # 'daily' or 'long-term'
 
 
-class ChatMessageResponse(BaseModel):
-    role: str
-    content: str
-    created_at: datetime
-
-
-class ChatHistoryResponse(BaseModel):
-    success: bool
-    history: List[ChatMessageResponse]
-
-
-class ChatActionResponse(BaseModel):
-    success: bool
-    message: str
-
-
 # --- Dependencies ---
 
 
 def get_current_user(
     token: Optional[str] = Header(None, alias="Authorization"),
-) -> User:
+) -> Optional[User]:
     """
     Dependency to get the current user from the token in the Authorization header.
     Expects 'Authorization: <token>' or 'Authorization: Bearer <token>'
     """
     if not token:
-        raise HTTPException(status_code=401, detail="Missing authorization token")
+        return None
 
     if token.startswith("Bearer "):
         token = token[7:]
@@ -52,28 +43,27 @@ def get_current_user(
         user = User.get_or_none(
             (User.session_token == token) & (User.token_expires_at > datetime.now())
         )
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
         return user
 
 
-@router.post("/chat", response_model=ChatMessageResponse)
+@router.post("/chat", response_model=ChatResponse)
 def chat(
-    req: ChatRequest, user: User = Depends(get_current_user)
-) -> ChatMessageResponse:
+    req: ChatRequest, user: Optional[User] = Depends(get_current_user)
+) -> ChatResponse:
     """
     用户发送消息，并获得 AI 回复。
     如果是该 session_type 的第一次聊天，将创建新会话。
     """
+    if not user:
+        return ChatResponse(success=False, code=401, message="未授权或登录已过期")
+
     if req.session_type not in ["daily", "long-term"]:
-        raise HTTPException(status_code=400, detail="Invalid session type")
+        return ChatResponse(success=False, code=400, message="非法的会话类型")
 
     db = Database()
     with db.connection_context():
         # 1. 获取或创建会话
-        session, created = ChatSession.get_or_create(
-            user=user, session_type=req.session_type
-        )
+        session, _ = ChatSession.get_or_create(user=user, session_type=req.session_type)
 
         # 2. 保存用户消息
         ChatMessage.create(session=session, role="user", content=req.message)
@@ -87,28 +77,36 @@ def chat(
             session=session, role="assistant", content=ai_reply_content
         )
 
-        return ChatMessageResponse(
-            role=ai_message.role,
-            content=ai_message.content,
-            created_at=ai_message.created_at,
+        return ChatResponse(
+            success=True,
+            data=ChatMessageData(
+                role=ai_message.role,
+                content=ai_message.content,
+                created_at=ai_message.created_at,
+            ),
         )
 
 
 @router.get("/history", response_model=ChatHistoryResponse)
 def history(
-    session_type: str, user: User = Depends(get_current_user)
+    session_type: str, user: Optional[User] = Depends(get_current_user)
 ) -> ChatHistoryResponse:
     """
     获取指定类型的聊天历史。
     """
+    if not user:
+        return ChatHistoryResponse(
+            success=False, code=401, message="未授权或登录已过期"
+        )
+
     if session_type not in ["daily", "long-term"]:
-        raise HTTPException(status_code=400, detail="Invalid session type")
+        return ChatHistoryResponse(success=False, code=400, message="非法的会话类型")
 
     db = Database()
     with db.connection_context():
         session = ChatSession.get_or_none(user=user, session_type=session_type)
         if not session:
-            return ChatHistoryResponse(success=True, history=[])
+            return ChatHistoryResponse(success=True, data=ChatHistoryData(history=[]))
 
         messages = (
             ChatMessage.select()
@@ -116,29 +114,34 @@ def history(
             .order_by(ChatMessage.created_at.asc())
         )
 
-        history = [
-            ChatMessageResponse(role=m.role, content=m.content, created_at=m.created_at)
+        history_list = [
+            ChatMessageData(role=m.role, content=m.content, created_at=m.created_at)
             for m in messages
         ]
 
-        return ChatHistoryResponse(success=True, history=history)
+        return ChatHistoryResponse(
+            success=True, data=ChatHistoryData(history=history_list)
+        )
 
 
 @router.delete("/delete", response_model=ChatActionResponse)
 def delete(
-    session_type: str, user: User = Depends(get_current_user)
+    session_type: str, user: Optional[User] = Depends(get_current_user)
 ) -> ChatActionResponse:
     """
     删除指定类型的聊天历史。
     """
+    if not user:
+        return ChatActionResponse(success=False, code=401, message="未授权或登录已过期")
+
     if session_type not in ["daily", "long-term"]:
-        raise HTTPException(status_code=400, detail="Invalid session type")
+        return ChatActionResponse(success=False, code=400, message="非法的会话类型")
 
     db = Database()
     with db.connection_context():
         session = ChatSession.get_or_none(user=user, session_type=session_type)
         if not session:
-            return ChatActionResponse(success=True, message="No history to delete")
+            return ChatActionResponse(success=True, message="无历史记录可删除")
 
         # 删除该会话下的所有消息
         query = ChatMessage.delete().where(ChatMessage.session == session)
@@ -147,4 +150,4 @@ def delete(
         # 删除会话本身
         session.delete_instance()
 
-        return ChatActionResponse(success=True, message="History deleted successfully")
+        return ChatActionResponse(success=True, message="历史记录已成功删除")

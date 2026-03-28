@@ -1,13 +1,13 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 from server.database.connect import Database
 from server.database.models import User
+from server.schema.auth import AuthData, AuthResponse
 
 router = APIRouter()
 
@@ -15,14 +15,6 @@ router = APIRouter()
 class AuthRequest(BaseModel):
     username: str
     password: str
-
-
-class AuthResponse(BaseModel):
-    success: bool
-    token: Optional[str] = None
-    avatar_url: Optional[str] = None
-    username: Optional[str] = None
-    message: Optional[str] = None
 
 
 def get_password_hash(password: str) -> str:
@@ -55,7 +47,7 @@ def register(req: AuthRequest) -> AuthResponse:
     with db.connection_context():
         # 检查用户名是否存在
         if User.select().where(User.username == req.username).exists():
-            return AuthResponse(success=False, message="用户名已存在")
+            return AuthResponse(success=False, code=400, message="用户名已存在")
 
         # 创建新用户
         token = generate_token()
@@ -70,12 +62,14 @@ def register(req: AuthRequest) -> AuthResponse:
             )
             return AuthResponse(
                 success=True,
-                token=token,
-                username=user.username,
-                avatar_url=get_avator(user),
+                data=AuthData(
+                    token=token,
+                    username=user.username,
+                    avatar_url=get_avator(user),
+                ),
             )
         except Exception as e:
-            return AuthResponse(success=False, message=f"注册失败: {str(e)}")
+            return AuthResponse(success=False, code=500, message=f"注册失败: {str(e)}")
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -88,7 +82,7 @@ def login(req: AuthRequest) -> AuthResponse:
         user = User.get_or_none(User.username == req.username)
 
         if not user or not verify_password(req.password, user.password_hash):
-            return AuthResponse(success=False, message="用户名或密码错误")
+            return AuthResponse(success=False, code=400, message="用户名或密码错误")
 
         # 更新 Session Token
         new_token = generate_token()
@@ -98,7 +92,9 @@ def login(req: AuthRequest) -> AuthResponse:
 
         return AuthResponse(
             success=True,
-            token=new_token,
-            username=user.username,
-            avatar_url=get_avator(user),
+            data=AuthData(
+                token=new_token,
+                username=user.username,
+                avatar_url=get_avator(user),
+            ),
         )
