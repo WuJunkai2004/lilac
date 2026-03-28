@@ -32,12 +32,12 @@ const isValid = () => {
   // 密码必须至少8位，包含至少一个字母和一个数字
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,31}$/; // 最少8位，至少1个字母和1个数字
 
-  if (usernameRegex.test(username.value)) {
+  if (!usernameRegex.test(username.value)) {
     alerts("提示", "用户名必须为5-15位字母、数字或下划线");
     return false;
   }
 
-  if (passwordRegex.test(password.value)) {
+  if (!passwordRegex.test(password.value)) {
     alerts("提示", "密码必须至少8位，包含至少一个字母和一个数字，且不超过31位");
     return false;
   }

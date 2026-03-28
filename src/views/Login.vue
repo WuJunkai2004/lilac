@@ -34,6 +34,8 @@ const login = () => {
     .then(async (data) => {
       if (data.success) {
         await storage.set("token", data.token, 0);
+        await storage.set("user", data.username, 0);
+        await storage.set("avatar", data.avatar || "/image/avatar.webp", 0);
         shows("登录成功", "欢迎回来，" + data.username + "！");
         router.push("/profile");
       } else {
