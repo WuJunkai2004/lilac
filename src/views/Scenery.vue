@@ -1,3 +1,83 @@
+<script setup>
+import { ref } from "vue";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+
+const capturedImage = ref(null);
+const letterText = ref("");
+const selectedLetter = ref(null);
+const showDetails = ref(false);
+
+const mockPins = [
+  {
+    id: 1,
+    x: 30,
+    y: 40,
+    image:
+      "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=800&q=80",
+    text: "初春的图书馆，丁香花又要开了。",
+    location: "图书馆",
+  },
+  {
+    id: 2,
+    x: 60,
+    y: 20,
+    image:
+      "https://images.unsplash.com/photo-1523050853023-8c2d27443ef8?auto=format&fit=crop&w=800&q=80",
+    text: "夕阳下的教学楼，心情也变得温暖。",
+    location: "一教",
+  },
+  {
+    id: 3,
+    x: 45,
+    y: 70,
+    image:
+      "https://images.unsplash.com/photo-1498243639359-f75cb752ee47?auto=format&fit=crop&w=800&q=80",
+    text: "深夜的操场，适合慢跑和发呆。",
+    location: "操场",
+  },
+];
+
+const recentLetters = ref([
+  ...mockPins,
+  {
+    id: 4,
+    image:
+      "https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?auto=format&fit=crop&w=800&q=80",
+    text: "咖啡馆里的这杯拉花，让疲惫消散了。",
+    location: "学生活动中心",
+    author: "Lily",
+  },
+]);
+
+const takePhoto = async () => {
+  try {
+    const image = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+    });
+    capturedImage.value = image.webPath;
+  } catch (error) {
+    console.error("Camera failed:", error);
+  }
+};
+
+const shareLetter = () => {
+  if (!letterText.value.trim()) {
+    console.warn("请写点什么吧");
+    return;
+  }
+  capturedImage.value = null;
+  letterText.value = "";
+};
+
+const viewLetter = (letter) => {
+  selectedLetter.value = letter;
+  showDetails.value = true;
+};
+</script>
+
 <template>
   <div class="flex flex-column h-full">
     <PageHeader
@@ -15,44 +95,8 @@
       </template>
     </PageHeader>
     <div class="scenery-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
-      <!-- 地图占位符 -->
-      <Card
-        class="map-container mb-5 overflow-hidden border-none shadow-3 relative border-round-3xl"
-        style="height: 220px"
-      >
-        <template #content>
-          <div
-            class="map-bg absolute inset-0 opacity-40 z-0"
-            style="
-              background-image: url(&quot;https://img.freepik.com/free-vector/city-map-background-abstract-layout-design_52683-42416.jpg&quot;);
-              background-size: cover;
-            "
-          ></div>
-
-          <!-- 模拟标记点 -->
-          <div
-            v-for="pin in mockPins"
-            :key="pin.id"
-            class="absolute cursor-pointer transition-all hover:scale-125 z-1"
-            :style="{ left: pin.x + '%', top: pin.y + '%' }"
-            @click="viewLetter(pin)"
-          >
-            <i
-              class="pi pi-map-marker text-3xl text-primary drop-shadow-sm"
-            ></i>
-          </div>
-
-          <div class="absolute bottom-0 right-0 m-3 z-2">
-            <Button
-              icon="pi pi-compass"
-              rounded
-              severity="primary"
-              text
-              class="bg-white-alpha-80 backdrop-blur-sm shadow-1 p-button-sm"
-            />
-          </div>
-        </template>
-      </Card>
+      <!-- 校园地图 -->
+      <SchoolMap :pins="mockPins" @pin-click="viewLetter" class="mb-5" />
 
       <!-- 拍摄后的编辑区域 -->
       <div v-if="capturedImage" class="edit-letter-section animate-fadein">
@@ -118,7 +162,7 @@
             class="w-full py-5 border-round-3xl shadow-3 transition-all transform active:scale-95 flex align-items-center justify-content-center"
           >
             <i class="pi pi-camera text-3xl mr-3"></i>
-            <span class="text-xl font-bold">拍摄此刻风景</span>
+            <span class="text-xl font-bold">分享此刻风景</span>
           </Button>
         </div>
 
@@ -254,86 +298,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from "vue";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
-
-const capturedImage = ref(null);
-const letterText = ref("");
-const selectedLetter = ref(null);
-const showDetails = ref(false);
-
-const mockPins = [
-  {
-    id: 1,
-    x: 30,
-    y: 40,
-    image:
-      "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=800&q=80",
-    text: "初春的图书馆，丁香花又要开了。",
-    location: "图书馆",
-  },
-  {
-    id: 2,
-    x: 60,
-    y: 20,
-    image:
-      "https://images.unsplash.com/photo-1523050853023-8c2d27443ef8?auto=format&fit=crop&w=800&q=80",
-    text: "夕阳下的教学楼，心情也变得温暖。",
-    location: "一教",
-  },
-  {
-    id: 3,
-    x: 45,
-    y: 70,
-    image:
-      "https://images.unsplash.com/photo-1498243639359-f75cb752ee47?auto=format&fit=crop&w=800&q=80",
-    text: "深夜的操场，适合慢跑和发呆。",
-    location: "操场",
-  },
-];
-
-const recentLetters = ref([
-  ...mockPins,
-  {
-    id: 4,
-    image:
-      "https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?auto=format&fit=crop&w=800&q=80",
-    text: "咖啡馆里的这杯拉花，让疲惫消散了。",
-    location: "学生活动中心",
-    author: "Lily",
-  },
-]);
-
-const takePhoto = async () => {
-  try {
-    const image = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
-    });
-    capturedImage.value = image.webPath;
-  } catch (error) {
-    console.error("Camera failed:", error);
-  }
-};
-
-const shareLetter = () => {
-  if (!letterText.value.trim()) {
-    console.warn("请写点什么吧");
-    return;
-  }
-  capturedImage.value = null;
-  letterText.value = "";
-};
-
-const viewLetter = (letter) => {
-  selectedLetter.value = letter;
-  showDetails.value = true;
-};
-</script>
 
 <style scoped>
 .inset-0 {
