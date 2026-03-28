@@ -117,7 +117,7 @@ const changeAvatar = () => {
             </div>
             <div class="col-4">
               <div class="text-xl font-bold text-primary">7</div>
-              <div class="text-xs text-surface-500 font-medium mt-1">成就</div>
+              <div class="text-xs text-surface-500 font-medium mt-1">心情</div>
             </div>
           </div>
         </template>

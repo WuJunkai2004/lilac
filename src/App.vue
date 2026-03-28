@@ -1,3 +1,24 @@
+<script setup>
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+
+const enableFooter = computed(() => {
+  const showFooterRoutes = [
+    "/calendar",
+    "/chat",
+    "/home",
+    "/scenery",
+    "/profile",
+    "/login",
+    "/register",
+  ];
+  console.log("当前路由:", route.path);
+  return showFooterRoutes.includes(route.path);
+});
+</script>
+
 <template>
   <div
     class="app-container flex flex-column h-screen overflow-hidden bg-surface-50"
@@ -13,6 +34,7 @@
 
     <!-- 底部导航栏 -->
     <nav
+      v-if="enableFooter"
       class="bottom-nav w-full h-5rem bg-surface-0 flex justify-content-around align-items-center z-5 shadow-5"
     >
       <NavItem to="/calendar" icon="pi-calendar" label="日历" />
