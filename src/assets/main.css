@@ -13,6 +13,15 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* 隐藏全局输入光标，仅在输入框内显示 */
+* {
+    caret-color: transparent;
+}
+
+input, textarea, [contenteditable="true"] {
+    caret-color: auto;
+}
+
 #app {
     height: 100vh;
 }
