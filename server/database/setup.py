@@ -10,7 +10,7 @@ from server.database.models import (
     User,
 )
 from server.utils.file import copy, folder
-from server.utils.image import register_image, save_image
+from server.utils.image import register_image
 from server.utils.logger import log
 
 
@@ -89,15 +89,26 @@ def setup():
     db.execute_sql("""
     CREATE VIEW IF NOT EXISTS v_public_letter_flow AS
     SELECT
-        l.id, l.content, i.name AS image_url, l.latitude, l.longitude,
+        l.id, l.content, l.image, l.latitude, l.longitude,
         l.location, l.likes_count, l.view_count, l.created_at,
-        u.username, ai.name AS avatar_url
+        u.username, u.avatar
     FROM letters l
     JOIN users u ON l.user_id = u.id
-    LEFT JOIN images i ON l.image = i.img_id
-    LEFT JOIN images ai ON u.avatar = ai.img_id
     WHERE l.is_public = 1
     ORDER BY l.created_at DESC;
+    """)
+
+    # 创建个人资料概览视图 (v_user_profile)
+    db.execute_sql("""
+    CREATE VIEW IF NOT EXISTS v_user_profile AS
+    SELECT
+        u.id AS user_id,
+        u.username,
+        u.avatar,
+        (SELECT COUNT(*) FROM letters l WHERE l.user_id = u.id) AS letter_count,
+        (SELECT TOTAL(likes_count) FROM letters l WHERE l.user_id = u.id) AS total_likes,
+        (SELECT COUNT(*) FROM mood_entries me WHERE me.user_id = u.id) AS mood_day_count
+    FROM users u;
     """)
 
     log("database").info("initialized database and created tables/views")

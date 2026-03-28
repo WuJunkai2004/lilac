@@ -66,8 +66,13 @@ CREATE TABLE letters (
     is_public BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (image) REFERENCES images(img_id)
+    FOREIGN KEY (image) REFERENCES images(img_id),
+    CHECK (content IS NOT NULL OR image IS NOT NULL)  -- 至少要有文字或图片中的一个
 );
+
+-- 为了优化查询性能，创建一个索引。
+-- 场景：获取用户的信笺列表时；统计用户的信笺数量时；获取用户的公开信笺列表时。
+CREATE INDEX idx_letters_user_id ON letters(user_id);
 ```
 
 ### 情绪记录表（mood_entries)
@@ -144,11 +149,27 @@ GROUP BY mt.id, summary_date;
 ```sql
 CREATE VIEW v_public_letter_flow AS
 SELECT 
-    l.id, l.content, l.image_url, l.latitude, l.longitude, 
-    l.location_name, l.likes_count, l.view_count, l.created_at,
-    u.username, u.avatar_url
+    l.id, l.content, l.image, l.latitude, l.longitude, 
+    l.location, l.likes_count, l.view_count, l.created_at,
+    u.username, u.avatar
 FROM letters l
 JOIN users u ON l.user_id = u.id
 WHERE l.is_public = 1
 ORDER BY l.created_at DESC;
+```
+
+### 用户信息统计视图 (v_user_profile)
+```sql
+CREATE VIEW v_user_profile AS
+SELECT 
+    u.id AS user_id,
+    u.username,
+    u.avatar,
+    -- 统计信笺数
+    (SELECT COUNT(*) FROM letters l WHERE l.user_id = u.id) AS letter_count,
+    -- 统计总点赞数 (TOTAL 会在无记录时返回 0 而不是 NULL)
+    (SELECT TOTAL(likes_count) FROM letters l WHERE l.user_id = u.id) AS total_likes,
+    -- 统计心情记录天数
+    (SELECT COUNT(*) FROM mood_entries me WHERE me.user_id = u.id) AS mood_day_count
+FROM users u;
 ```

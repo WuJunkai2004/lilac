@@ -66,7 +66,8 @@ class Letter(BaseModel):
 
     class Meta:  # type: ignore
         table_name = "letters"
-        indexes = ((("latitude", "longitude"), False),)
+        indexes = ((("user",), False),)
+        constraints = [Check("content IS NOT NULL OR image IS NOT NULL")]
 
 
 class MoodEntry(BaseModel):
@@ -78,10 +79,7 @@ class MoodEntry(BaseModel):
 
     class Meta:  # type: ignore
         table_name = "mood_entries"
-        indexes = (
-            (("user", "log_date"), True),
-            (("log_date", "user"), False),
-        )
+        indexes = ((("user", "log_date"), True),)
 
 
 class AIFeedback(BaseModel):
@@ -131,8 +129,8 @@ class SchoolMoodSummary(BaseModel):
 
 class PublicLetterFlow(BaseModel):
     id = IntegerField()
-    content = TextField()
-    image_url = CharField()
+    content = TextField(null=True)
+    image = IntegerField(null=True)
     latitude = FloatField()
     longitude = FloatField()
     location = CharField()
@@ -140,8 +138,21 @@ class PublicLetterFlow(BaseModel):
     view_count = IntegerField()
     created_at = DateTimeField()
     username = CharField()
-    avatar_url = CharField()
+    avatar = IntegerField(null=True)
 
     class Meta:  # type: ignore
         table_name = "v_public_letter_flow"
+        primary_key = False
+
+
+class UserProfile(BaseModel):
+    user_id = IntegerField()
+    username = CharField()
+    avatar = IntegerField(null=True)
+    letter_count = IntegerField()
+    total_likes = IntegerField()
+    mood_day_count = IntegerField()
+
+    class Meta:  # type: ignore
+        table_name = "v_user_profile"
         primary_key = False
