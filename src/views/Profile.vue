@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
+import { resCheck } from "#/check";
 
 const router = useRouter();
 const user = ref(null);
@@ -28,29 +29,79 @@ const settings = [
 ];
 
 const loadUser = async () => {
-  const savedUser = await storage.get("user");
-  console.log("加载用户信息:", savedUser);
-  if (savedUser) {
-    user.value = {
-      username: savedUser,
-      avatar: await storage.get("avatar"),
-    };
-  } else {
+  const savedToken = await storage.get("token");
+  if (!savedToken) {
     user.value = null;
     router.push("/login");
+    return;
   }
+
+  // 1. 尝试从 storage 获取 profile (有效期 1 小时)
+  const profile = await storage.get("profile");
+  if (profile) {
+    // 如果有缓存，直接设置
+    user.value = {
+      username: profile.username,
+      avatar: profile.avatar_url,
+      letterCount: profile.letter_count || 0,
+      totalLikes: profile.total_likes || 0,
+      moodDayCount: profile.mood_day_count || 0,
+    };
+    return;
+  }
+  // 2. 如果不存在或过期，从网络获取
+  fetch("/api/user/profile", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${savedToken}`,
+    },
+  })
+    .then(resCheck)
+    .then(async (res) => {
+      if (!res.success) {
+        throw new Error(res.message || "获取个人资料失败");
+      }
+      const data = res.data;
+      // 3. 存入 storage，有效期 1 小时
+      storage.set("profile", data, 1);
+      // 更新长期存储的头像
+      if (data.avatar_url) {
+        storage.set("avatar", data.avatar_url, 0);
+      }
+
+      user.value = {
+        username: data.username,
+        avatar: data.avatar_url,
+        letterCount: data.letter_count || 0,
+        totalLikes: data.total_likes || 0,
+        moodDayCount: data.mood_day_count || 0,
+      };
+    })
+    .catch(async (error) => {
+      console.error("加载个人资料失败:", error);
+      // 降级处理：仅展示基础信息
+      user.value = {
+        username: await storage.get("user"),
+        avatar: await storage.get("avatar"),
+        letterCount: 0,
+        totalLikes: 0,
+        moodDayCount: 0,
+      };
+    });
 };
 
 onMounted(loadUser);
 
 const logout = async () => {
   await storage.remove("user");
-  await loadUser();
+  await storage.remove("profile");
+  await storage.remove("avatar");
+  user.value = null;
   router.push("/login");
 };
 
 const changeAvatar = () => {
-  alert("此处将调用摄像头/相册修改头像");
+  router.push("/profile/avatar");
 };
 </script>
 
@@ -74,14 +125,9 @@ const changeAvatar = () => {
         <template #content>
           <div class="avatar-container relative inline-block mb-4">
             <Avatar
-              :image="user.avatar || 'https://www.gravatar.com/avatar/0?d=mp'"
+              :image="user.avatar || '/image/avatar.webp'"
               class="w-8rem h-8rem shadow-3 border-3 border-primary-100"
               shape="circle"
-            />
-            <Button
-              icon="pi pi-pencil"
-              rounded
-              class="absolute bottom-0 right-0 shadow-2 p-button-sm w-2.5rem h-2.5rem"
               @click="changeAvatar"
             />
           </div>
@@ -96,15 +142,21 @@ const changeAvatar = () => {
 
           <div class="grid mt-2 mb-2">
             <div class="col-4 border-right-1 border-surface-200">
-              <div class="text-xl font-bold text-primary">12</div>
+              <div class="text-xl font-bold text-primary">
+                {{ user.letterCount }}
+              </div>
               <div class="text-xs text-surface-500 font-medium mt-1">信笺</div>
             </div>
             <div class="col-4 border-right-1 border-surface-200">
-              <div class="text-xl font-bold text-primary">45</div>
+              <div class="text-xl font-bold text-primary">
+                {{ user.totalLikes }}
+              </div>
               <div class="text-xs text-surface-500 font-medium mt-1">赞</div>
             </div>
             <div class="col-4">
-              <div class="text-xl font-bold text-primary">7</div>
+              <div class="text-xl font-bold text-primary">
+                {{ user.moodDayCount }}
+              </div>
               <div class="text-xs text-surface-500 font-medium mt-1">心情</div>
             </div>
           </div>

@@ -34,7 +34,7 @@ const login = () => {
     .then(resCheck)
     .then(async (res) => {
       if (res.success) {
-        await storage.set("token", res.data.token, 0);
+        await storage.set("token", res.data.token, 7 * 24);
         await storage.set("user", res.data.username, 0);
         await storage.set(
           "avatar",
