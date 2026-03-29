@@ -32,6 +32,7 @@ class Image(BaseModel):
 
 
 class User(BaseModel):
+    id = AutoField()
     username = CharField(unique=True)
     password_hash = CharField()
     avatar = ForeignKeyField(Image, null=True, column_name="avatar", backref="users")
@@ -44,6 +45,7 @@ class User(BaseModel):
 
 
 class MoodType(BaseModel):
+    id = AutoField()
     name = CharField(unique=True)
     color_code = CharField(null=True)
     element_type = CharField(null=True)
@@ -53,7 +55,7 @@ class MoodType(BaseModel):
 
 
 class Letter(BaseModel):
-    user = ForeignKeyField(User, backref="letters")
+    user_id = ForeignKeyField(User, backref="letters")
     content = TextField(null=True)
     image = ForeignKeyField(Image, null=True, column_name="image", backref="letters")
     latitude = FloatField()
@@ -66,24 +68,24 @@ class Letter(BaseModel):
 
     class Meta:  # type: ignore
         table_name = "letters"
-        indexes = ((("user",), False),)
+        indexes = ((("user_id",), False),)
         constraints = [Check("content IS NOT NULL OR image IS NOT NULL")]
 
 
 class MoodEntry(BaseModel):
-    user = ForeignKeyField(User, backref="mood_entries")
-    mood_type = ForeignKeyField(MoodType, backref="mood_entries")
+    user_id = ForeignKeyField(User, backref="mood_entries")
+    mood_type_id = ForeignKeyField(MoodType, backref="mood_entries")
     log_date = DateField()
     is_public = BooleanField(default=False)
     created_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:  # type: ignore
         table_name = "mood_entries"
-        indexes = ((("user", "log_date"), True),)
+        indexes = ((("user_id", "log_date"), True),)
 
 
 class AIFeedback(BaseModel):
-    mood_entry = ForeignKeyField(MoodEntry, backref="ai_feedback", unique=True)
+    mood_entry_id = ForeignKeyField(MoodEntry, backref="ai_feedback", unique=True)
     review_content = TextField()
     rec_activity = TextField(null=True)
     rec_food = TextField(null=True)
@@ -95,7 +97,7 @@ class AIFeedback(BaseModel):
 
 
 class ChatSession(BaseModel):
-    user = ForeignKeyField(User, backref="chat_sessions")
+    user_id = ForeignKeyField(User, backref="chat_sessions")
     session_type = CharField()  # 'daily' or 'long-term'
     created_at = DateTimeField(default=datetime.datetime.now)
 
@@ -105,7 +107,7 @@ class ChatSession(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    session = ForeignKeyField(ChatSession, backref="messages")
+    session_id = ForeignKeyField(ChatSession, backref="messages")
     role = CharField()  # 'user' or 'assistant'
     content = TextField()
     created_at = DateTimeField(default=datetime.datetime.now)

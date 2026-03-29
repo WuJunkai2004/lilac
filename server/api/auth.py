@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 from server.database.connect import Database
 from server.database.models import User
 from server.schema.auth import AuthData, AuthResponse
+from server.utils.auth import get_avatar_url
 
 router = APIRouter()
 
@@ -43,13 +44,6 @@ def generate_token() -> str:
     return secrets.token_hex(32)
 
 
-def get_avator(user: User) -> str:
-    """获取用户头像 URL，返回默认头像如果没有设置"""
-    if user.avatar:
-        return f"/image/{user.avatar.name}"
-    return "/image/avatar"
-
-
 @router.post("/register", response_model=AuthResponse)
 def register(req: AuthRequest) -> AuthResponse:
     """用户注册接口"""
@@ -76,7 +70,7 @@ def register(req: AuthRequest) -> AuthResponse:
                 data=AuthData(
                     token=token,
                     username=user.username,
-                    avatar_url=get_avator(user),
+                    avatar_url=get_avatar_url(user),
                 ),
             )
         except Exception as e:
@@ -106,6 +100,6 @@ def login(req: AuthRequest) -> AuthResponse:
             data=AuthData(
                 token=new_token,
                 username=user.username,
-                avatar_url=get_avator(user),
+                avatar_url=get_avatar_url(user),
             ),
         )

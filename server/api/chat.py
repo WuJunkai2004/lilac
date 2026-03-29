@@ -1,7 +1,6 @@
-from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from server.database.connect import Database
@@ -13,6 +12,7 @@ from server.schema.chat import (
     ChatMessageData,
     ChatResponse,
 )
+from server.utils.auth import get_current_user
 
 router = APIRouter()
 
@@ -20,30 +20,6 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     session_type: str  # 'daily' or 'long-term'
-
-
-# --- Dependencies ---
-
-
-def get_current_user(
-    token: Optional[str] = Header(None, alias="Authorization"),
-) -> Optional[User]:
-    """
-    Dependency to get the current user from the token in the Authorization header.
-    Expects 'Authorization: <token>' or 'Authorization: Bearer <token>'
-    """
-    if not token:
-        return None
-
-    if token.startswith("Bearer "):
-        token = token[7:]
-
-    db = Database()
-    with db.connection_context():
-        user = User.get_or_none(
-            (User.session_token == token) & (User.token_expires_at > datetime.now())
-        )
-        return user
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -110,7 +86,7 @@ def history(
 
         messages = (
             ChatMessage.select()
-            .where(ChatMessage.session == session)
+            .where(ChatMessage.session_id == session)
             .order_by(ChatMessage.created_at.asc())
         )
 
@@ -124,7 +100,7 @@ def history(
         )
 
 
-@router.delete("/delete", response_model=ChatActionResponse)
+@router.post("/delete", response_model=ChatActionResponse)
 def delete(
     session_type: str, user: Optional[User] = Depends(get_current_user)
 ) -> ChatActionResponse:
@@ -144,7 +120,7 @@ def delete(
             return ChatActionResponse(success=True, message="无历史记录可删除")
 
         # 删除该会话下的所有消息
-        query = ChatMessage.delete().where(ChatMessage.session == session)
+        query = ChatMessage.delete().where(ChatMessage.session_id == session)
         query.execute()
 
         # 删除会话本身
