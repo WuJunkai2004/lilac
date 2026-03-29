@@ -20,12 +20,25 @@ async function generateDocs() {
     }
     const openApiData = await response.json();
 
-    // Remove 422 Validation Error from all paths
     if (openApiData.paths) {
       for (const path in openApiData.paths) {
         for (const method in openApiData.paths[path]) {
+          const operation = openApiData.paths[path][method];
+
+          // 1. Remove 422 Validation Error from all paths
           if (openApiData.paths[path][method].responses) {
             delete openApiData.paths[path][method].responses["422"];
+          }
+
+          // 2. check if need security
+          if (operation.security && operation.security.length > 0) {
+            const authNotice =
+              "\n\n> 🔒 **Auth Required** \n> Need take `Authorization: Bearer <token>` in Headers.";
+            if (operation.description) {
+              operation.description += authNotice;
+            } else {
+              operation.description = authNotice;
+            }
           }
         }
       }
