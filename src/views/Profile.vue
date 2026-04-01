@@ -3,9 +3,11 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
 import { resCheck } from "#/check";
+import { useAlert } from "#/alert";
 
 const router = useRouter();
 const user = ref(null);
+const { awaitAlert } = useAlert();
 
 const settings = [
   {
@@ -94,6 +96,14 @@ const loadUser = async () => {
 onMounted(loadUser);
 
 const logout = async () => {
+  if (
+    !(await awaitAlert("提示", "确定要退出登录吗？", {
+      accept: "退出",
+      reject: "取消",
+    }))
+  ) {
+    return;
+  }
   await storage.remove("token");
   await storage.remove("user");
   await storage.remove("profile");
@@ -196,20 +206,33 @@ const changeAvatar = () => {
 
     <section v-if="user">
       <div class="flex flex-column gap-3">
-        <div
+        <Card
           v-for="item in settings"
           :key="item.label"
-          class="flex align-items-center justify-content-between p-3 surface-card border-round-xl shadow-1 active:surface-100 cursor-pointer transition-colors"
+          class="border-round-xl shadow-1 active:surface-100 cursor-pointer transition-colors border-none"
           @click="item.route ? router.push(item.route) : null"
         >
-          <div class="flex align-items-center">
-            <div :class="['p-2 border-round-lg mr-3 shadow-sm', item.bg]">
-              <i :class="[item.icon, 'text-lg', item.color]"></i>
+          <template #content>
+            <div class="flex align-items-center justify-content-between">
+              <div class="flex align-items-center">
+                <div :class="['p-2 border-round-lg mr-3 shadow-sm', item.bg]">
+                  <i :class="[item.icon, 'text-lg', item.color]"></i>
+                </div>
+                <span class="font-bold text-surface-700">{{ item.label }}</span>
+              </div>
+
+              <div class="flex align-items-center">
+                <span
+                  v-if="item.value"
+                  class="mr-2 text-sm text-surface-400 font-medium"
+                >
+                  {{ item.value }}
+                </span>
+                <i class="pi pi-chevron-right text-surface-300"></i>
+              </div>
             </div>
-            <span class="font-bold text-surface-700">{{ item.label }}</span>
-          </div>
-          <i class="pi pi-chevron-right text-surface-300"></i>
-        </div>
+          </template>
+        </Card>
       </div>
     </section>
   </div>
