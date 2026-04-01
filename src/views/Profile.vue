@@ -25,6 +25,7 @@ const settings = [
     icon: "pi pi-info-circle",
     color: "text-fuchsia-500",
     bg: "bg-fuchsia-50",
+    route: "/about",
   },
 ];
 
@@ -199,6 +200,7 @@ const changeAvatar = () => {
           v-for="item in settings"
           :key="item.label"
           class="flex align-items-center justify-content-between p-3 surface-card border-round-xl shadow-1 active:surface-100 cursor-pointer transition-colors"
+          @click="item.route ? router.push(item.route) : null"
         >
           <div class="flex align-items-center">
             <div :class="['p-2 border-round-lg mr-3 shadow-sm', item.bg]">

@@ -48,6 +48,12 @@ const routes = [
     component: () => import("@/views/ProfileAvatar.vue"),
   },
   {
+    // 关于页面
+    path: "/about",
+    name: "About",
+    component: () => import("@/views/About.vue"),
+  },
+  {
     // 登录页面，当用户访问个人资料或其他需要认证的页面时，如果未登录，会被重定向到登录页面。
     path: "/login",
     name: "Login",
