@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
+import debounce from "#/debounce";
 import { resCheck } from "#/check";
 
 import "cropper-next-vue/style.css";
@@ -10,12 +11,14 @@ import { VueCropper } from "cropper-next-vue";
 const router = useRouter();
 const currentAvatar = ref("");
 const selectedFile = ref(null);
+const cropperUrl = ref("");
 const previewUrl = ref("");
 const isUploading = ref(false);
+const cropperRef = ref(null);
 
 const loadAvatar = async () => {
   const avatar = await storage.get("avatar");
-  currentAvatar.value = avatar || "https://www.gravatar.com/avatar/0?d=mp";
+  currentAvatar.value = avatar || "/image/avatar.webp";
 };
 
 onMounted(loadAvatar);
@@ -24,7 +27,10 @@ const onFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
     selectedFile.value = file;
-    previewUrl.value = URL.createObjectURL(file);
+    if (cropperUrl.value) {
+      URL.revokeObjectURL(cropperUrl.value);
+    }
+    cropperUrl.value = URL.createObjectURL(file);
   }
 };
 
@@ -32,12 +38,26 @@ const triggerFileInput = () => {
   document.getElementById("avatarInput").click();
 };
 
+const refreshPreview = debounce(async () => {
+  if (cropperRef.value) {
+    const blob = await cropperRef.value.getCropBlob();
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value);
+    }
+    previewUrl.value = URL.createObjectURL(blob);
+  }
+}, 300);
+
 const uploadAvatar = async () => {
-  if (!selectedFile.value) return;
+  if (!selectedFile.value || !cropperRef.value) {
+    return;
+  }
 
   isUploading.value = true;
   const formData = new FormData();
-  formData.append("file", selectedFile.value);
+
+  const blob = await cropperRef.value.getCropBlob();
+  formData.append("file", blob, "avatar.png");
 
   fetch("/api/user/avatar", {
     method: "POST",
@@ -62,7 +82,10 @@ const uploadAvatar = async () => {
       }
       currentAvatar.value = newAvatarUrl;
       selectedFile.value = null;
-      previewUrl.value = "";
+      if (cropperUrl.value) {
+        URL.revokeObjectURL(cropperUrl.value);
+        cropperUrl.value = "";
+      }
       alert("头像上传成功！");
       router.back();
     })
@@ -76,6 +99,9 @@ const uploadAvatar = async () => {
 };
 
 const goBack = () => {
+  if (cropperUrl.value) {
+    URL.revokeObjectURL(cropperUrl.value);
+  }
   router.back();
 };
 </script>
@@ -114,6 +140,23 @@ const goBack = () => {
         </div>
       </div>
 
+      <div
+        v-if="selectedFile"
+        class="cropper-container mb-6 w-full"
+      >
+        <p class="text-surface-500 mb-4 text-center">调整裁剪区域</p>
+        <div class="cropper-wrapper shadow-2 border-round overflow-hidden">
+          <VueCropper
+            ref="cropperRef"
+            :img="cropperUrl"
+            :full="true"
+            :crop-layout="{ width: 220, height: 220 }"
+            @real-time="refreshPreview"
+            output-type="png"
+          />
+        </div>
+      </div>
+
       <input
         id="avatarInput"
         type="file"
@@ -132,7 +175,7 @@ const goBack = () => {
         />
         <Button
           v-if="selectedFile"
-          label="确认上传"
+          label="确认并上传"
           icon="pi pi-upload"
           :loading="isUploading"
           @click="uploadAvatar"
@@ -146,5 +189,9 @@ const goBack = () => {
 <style scoped>
 .avatar-edit-page {
   min-height: 100vh;
+}
+
+.cropper-wrapper {
+  background-color: var(--surface-200);
 }
 </style>

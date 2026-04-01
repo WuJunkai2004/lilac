@@ -93,6 +93,7 @@ const loadUser = async () => {
 onMounted(loadUser);
 
 const logout = async () => {
+  await storage.remove("token");
   await storage.remove("user");
   await storage.remove("profile");
   await storage.remove("avatar");
