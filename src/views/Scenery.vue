@@ -152,102 +152,12 @@ const viewLetter = (letter) => {
       </div>
 
       <!-- 查看信笺详情 -->
-      <Dialog
-        v-model:visible="showDetails"
-        modal
-        dismissableMask
-        :showHeader="false"
-        class="border-round-3xl overflow-hidden max-w-26rem w-full m-3 p-0"
-      >
-        <div v-if="selectedLetter" class="overflow-hidden">
-          <div class="relative">
-            <img
-              :src="selectedLetter.image"
-              class="w-full block h-20rem object-cover"
-            />
-            <Button
-              icon="pi pi-times"
-              rounded
-              text
-              severity="secondary"
-              @click="showDetails = false"
-              class="absolute top-0 right-0 m-3 w-2.5rem h-2.5rem bg-black-alpha-50 text-white backdrop-blur-sm border-none hover:bg-black-alpha-60 transition-colors"
-            />
-          </div>
-          <div class="p-4 bg-surface-0">
-            <div class="flex align-items-center mb-4">
-              <Avatar
-                icon="pi pi-user"
-                class="mr-2 bg-primary-50 text-primary shadow-sm"
-                shape="circle"
-              />
-              <span class="font-bold text-surface-900 text-lg">{{
-                selectedLetter.author || "匿名校友"
-              }}</span>
-            </div>
-            <p class="text-surface-700 line-height-4 mb-5 text-lg italic">
-              "{{ selectedLetter.text }}"
-            </p>
-            <Divider />
-            <div class="flex justify-content-between align-items-center pt-2">
-              <span
-                class="text-xs text-surface-400 flex align-items-center font-medium"
-              >
-                <i class="pi pi-clock mr-1"></i>
-                {{ selectedLetter.time || "10分钟前" }}
-              </span>
-              <div class="flex gap-4">
-                <Button
-                  icon="pi pi-heart"
-                  label="12"
-                  text
-                  severity="secondary"
-                  class="p-0 text-xs gap-1 font-bold"
-                />
-                <Button
-                  icon="pi pi-share-alt"
-                  text
-                  severity="secondary"
-                  class="p-0"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Dialog>
+      <Letter v-model:visible="showDetails" :letter="selectedLetter" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.inset-0 {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
-.bg-black-alpha-40 {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-.bg-black-alpha-50 {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.bg-black-alpha-60 {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-.bg-white-alpha-80 {
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
-}
-
 .object-cover {
   object-fit: cover;
 }
@@ -256,30 +166,7 @@ const viewLetter = (letter) => {
   font-size: 0.65rem;
 }
 
-.animate-fadein {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .drop-shadow-sm {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.max-w-26rem {
-  max-width: 26rem;
-}
-
-:deep(.p-dialog-content) {
-  padding: 0 !important;
 }
 </style>
