@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
+from pydantic import BaseModel
 
 from server.database.connect import Database
 from server.database.models import User, UserProfile
@@ -9,6 +10,10 @@ from server.utils.auth import get_avatar_url, get_current_user
 from server.utils.image import convert_to_webp
 
 router = APIRouter()
+
+
+class AvatarRequest(BaseModel):
+    file: UploadFile = File(...)
 
 
 @router.get("/profile", response_model=UserProfileResponse)
@@ -58,18 +63,18 @@ def get_profile(
 
 @router.post("/avatar", response_model=UserProfileResponse)
 async def update_avatar(
-    file: UploadFile = File(...), user: Optional[User] = Depends(get_current_user)
+    req: AvatarRequest = Depends(), user: Optional[User] = Depends(get_current_user)
 ) -> UserProfileResponse:
     """
     更新当前用户的头像。
     """
-    if not user or not file.content_type:
+    if not user or not req.file.content_type:
         return UserProfileResponse(
             success=False, code=401, message="未授权或登录已过期"
         )
 
     # 验证文件类型
-    if not file.content_type.startswith("image/"):
+    if not req.file.content_type.startswith("image/"):
         return UserProfileResponse(
             success=False, code=400, message="上传的文件必须是图片"
         )
@@ -78,10 +83,10 @@ async def update_avatar(
     with db.connection_context():
         try:
             # 1. 将上传的图片转换为 webp 并保存，同时在数据库注册
-            image_record = convert_to_webp(file.file)
+            image_record = convert_to_webp(req.file.file)
 
             # 2. 更新用户的头像 ID
-            user.avatar = image_record
+            user.avatar = image_record  # type: ignore
             user.save()
 
             # 3. 返回更新后的资料

@@ -1,24 +1,26 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Header
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from server.database.connect import Database
 from server.database.models import User
 
+security = HTTPBearer(auto_error=False)
+
 
 def get_current_user(
-    token: Optional[str] = Header(None, alias="Authorization"),
+    auth: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Optional[User]:
     """
     Dependency to get the current user from the token in the Authorization header.
-    Expects 'Authorization: <token>' or 'Authorization: Bearer <token>'
+    Expects 'Authorization: Bearer <token>'
     """
-    if not token:
+    if not auth:
         return None
 
-    if token.startswith("Bearer "):
-        token = token[7:]
+    token = auth.credentials
 
     db = Database()
     with db.connection_context():
