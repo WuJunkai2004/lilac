@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from pydantic import BaseModel
 
 from server.database.connect import Database
@@ -63,7 +63,7 @@ def get_profile(
 
 @router.post("/avatar", response_model=UserProfileResponse)
 async def update_avatar(
-    req: AvatarRequest = Depends(), user: Optional[User] = Depends(get_current_user)
+    req: AvatarRequest = Form(), user: Optional[User] = Depends(get_current_user)
 ) -> UserProfileResponse:
     """
     更新当前用户的头像。

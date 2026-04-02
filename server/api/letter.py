@@ -24,7 +24,7 @@ class ShareRequest(BaseModel):
 
 @router.post("/share", response_model=ShareResponse)
 async def share_letter(
-    req: ShareRequest = Depends(),
+    req: ShareRequest = Form(),
     user: Optional[User] = Depends(get_current_user),
 ) -> ShareResponse:
     """
