@@ -4,10 +4,12 @@ import { useRouter } from "vue-router";
 import storage from "#/storage";
 import debounce from "#/debounce";
 import { resCheck } from "#/check";
+import { useAlert } from "#/alert";
 
 import "cropper-next-vue/style.css";
 import { VueCropper } from "cropper-next-vue";
 
+const { shows } = useAlert();
 const router = useRouter();
 const currentAvatar = ref("");
 const selectedFile = ref(null);
@@ -86,7 +88,7 @@ const uploadAvatar = async () => {
         URL.revokeObjectURL(cropperUrl.value);
         cropperUrl.value = "";
       }
-      alert("头像上传成功！");
+      shows("头像上传成功", "你的新头像已经更新啦！");
       router.back();
     })
     .catch((error) => {
@@ -140,10 +142,7 @@ const goBack = () => {
         </div>
       </div>
 
-      <div
-        v-if="selectedFile"
-        class="cropper-container mb-6 w-full"
-      >
+      <div v-if="selectedFile" class="cropper-container mb-6 w-full">
         <p class="text-surface-500 mb-4 text-center">调整裁剪区域</p>
         <div class="cropper-wrapper shadow-2 border-round overflow-hidden">
           <VueCropper
