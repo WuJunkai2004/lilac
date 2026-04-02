@@ -3,6 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useAlert } from "#/alert";
+import storage from "#/storage";
+import { resCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
@@ -28,7 +30,7 @@ const takePhoto = async (source = CameraSource.Camera) => {
     const image = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
-      resultType: CameraResultType.Uri,
+      resultType: CameraResultType.Uri, // 恢复为 Uri 以便转为 Blob
       source: source,
     });
     capturedImage.value = image.webPath;
@@ -48,19 +50,56 @@ const handleMapClick = (event) => {
   };
 };
 
-const publishLetter = () => {
-  if (!capturedImage.value) {
-    alerts("提示", "请先拍摄或选择一张风景图片");
-    return;
-  }
-  if (!onlyImage.value && !letterText.value.trim()) {
-    alerts("提示", "请写下此刻的心情或感悟");
+const publishLetter = async () => {
+  const content = letterText.value.trim();
+  // 校验逻辑：content 和 image 至少有一个非空
+  if (!capturedImage.value && !content) {
+    alerts("提示", "请先拍摄风景图片或写下此刻的心情");
     return;
   }
 
-  // 模拟发布
-  shows("发布成功", "你的信笺已化作丁香回响，飘落在校园角落。");
-  router.push("/scenery");
+  const token = await storage.get("token");
+  if (!token) {
+    alerts("未登录", "请先登录后再发布信笺");
+    router.push("/login");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("content", content || "");
+  formData.append("mood", selectedMood.value);
+  formData.append("latitude", location.value.y);
+  formData.append("longitude", location.value.x);
+  formData.append("location", location.value.name || "校园角落");
+  formData.append("is_public", isPublic.value ? 1 : 0);
+
+  if (capturedImage.value) {
+    // 将 Capacitor 的 webPath 转换为 Blob 上传
+    const response = await fetch(capturedImage.value);
+    const blob = await response.blob();
+    formData.append("image", blob, "scenery.jpg");
+  }
+
+  fetch("/api/letter/share", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+    .then(resCheck)
+    .then((res) => {
+      if (res.success) {
+        shows("发布成功", "你的信笺已化作丁香回响，飘落在校园角落。");
+        router.push("/scenery");
+      } else {
+        alerts("发布失败", res.message || "服务器开小差了，请稍后再试");
+      }
+    })
+    .catch((err) => {
+      console.error("Publish error:", err);
+      alerts("发布失败", "网络请求异常");
+    });
 };
 
 onMounted(() => {

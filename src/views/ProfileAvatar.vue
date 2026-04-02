@@ -9,7 +9,7 @@ import { useAlert } from "#/alert";
 import "cropper-next-vue/style.css";
 import { VueCropper } from "cropper-next-vue";
 
-const { shows } = useAlert();
+const { alerts, shows } = useAlert();
 const router = useRouter();
 const currentAvatar = ref("");
 const selectedFile = ref(null);
@@ -93,7 +93,9 @@ const uploadAvatar = async () => {
     })
     .catch((error) => {
       console.error("上传头像失败:", error);
-      alert("上传失败，请稍后再试");
+      alerts("错误", "上传失败，请稍后再试", {
+        icon: "pi pi-exclamation-triangle",
+      });
     })
     .finally(() => {
       isUploading.value = false;
