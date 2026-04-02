@@ -89,7 +89,7 @@ def setup():
     db.execute_sql("""
     CREATE VIEW IF NOT EXISTS v_public_letter_flow AS
     SELECT
-        l.id, l.content, l.image, l.latitude, l.longitude,
+        l.id, l.content, l.image, l.latitude, l.longitude, l.mood_type AS mood_id,
         l.location, l.likes_count, l.view_count, l.created_at,
         u.username, u.avatar
     FROM letters l

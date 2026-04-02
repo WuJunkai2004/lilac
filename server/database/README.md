@@ -58,6 +58,7 @@ CREATE TABLE letters (
     user_id INTEGER NOT NULL,
     content TEXT,              -- 文字内容
     image INTEGER,             -- 配图
+    mood_type INTEGER,         -- 情绪类型
     latitude REAL NOT NULL,    -- 纬度
     longitude REAL NOT NULL,   -- 经度
     location TEXT NOT NULL,    -- 地点名称
@@ -67,6 +68,7 @@ CREATE TABLE letters (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (image) REFERENCES images(img_id),
+    FOREIGN KEY (mood_type) REFERENCES mood_types(id),
     CHECK (content IS NOT NULL OR image IS NOT NULL)  -- 至少要有文字或图片中的一个
 );
 
@@ -149,7 +151,7 @@ GROUP BY mt.id, summary_date;
 ```sql
 CREATE VIEW v_public_letter_flow AS
 SELECT 
-    l.id, l.content, l.image, l.latitude, l.longitude, 
+    l.id, l.content, l.image, l.latitude, l.longitude, l.mood_type AS mood_id,
     l.location, l.likes_count, l.view_count, l.created_at,
     u.username, u.avatar
 FROM letters l
