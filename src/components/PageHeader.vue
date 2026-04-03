@@ -14,7 +14,7 @@ defineProps({
 <template>
   <div class="px-4 pt-4">
     <header
-      class="page-header flex align-items-center justify-content-between mb-6"
+      class="page-header flex align-items-center justify-content-between mb-3"
     >
       <div>
         <h1 class="text-3xl font-bold text-primary m-0">{{ title }}</h1>

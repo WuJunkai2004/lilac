@@ -125,7 +125,8 @@ const goBack = () => {
     </header>
 
     <div
-      class="flex-grow-1 flex flex-column align-items-center justify-content-center"
+      class="flex-grow-1 flex flex-column overflow-y-auto align-items-center justify-content-center"
+      :class="[selectedFile ? '' : 'pb-8']"
     >
       <div class="preview-section mb-6 text-center">
         <p class="text-surface-500 mb-4">头像预览</p>
