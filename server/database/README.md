@@ -77,6 +77,19 @@ CREATE TABLE letters (
 CREATE INDEX idx_letters_user_id ON letters(user_id);
 ```
 
+### 信笺点赞表 (letter_likes)
+- **复合索引**: 在 user_id 和 letter_id 上建立唯一索引，确保一个用户对一封信只能点一次赞，同时加快查询速度。
+```sql
+CREATE TABLE letter_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    letter_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (letter_id) REFERENCES letters(id),
+    UNIQUE(user_id, letter_id)
+);
+```
+
 ### 情绪记录表（mood_entries)
 - **log_date**: 记录用户每天的情绪状态，确保每天只能有一条记录。
 - **is_public**: 是否公开，默认为0（私密），用户可以选择将情绪记录设为公开，以便在主页展示。

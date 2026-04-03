@@ -55,6 +55,7 @@ class MoodType(BaseModel):
 
 
 class Letter(BaseModel):
+    id = AutoField()
     user_id = ForeignKeyField(User, backref="letters")
     content = TextField(null=True)
     image = ForeignKeyField(Image, null=True, column_name="image", backref="letters")
@@ -73,6 +74,16 @@ class Letter(BaseModel):
         table_name = "letters"
         indexes = ((("user_id",), False),)
         constraints = [Check("content IS NOT NULL OR image IS NOT NULL")]
+
+
+class LetterLike(BaseModel):
+    id = AutoField()
+    user_id = ForeignKeyField(User, backref="letter_likes")
+    letter_id = ForeignKeyField(Letter, backref="likes")
+
+    class Meta:  # type: ignore
+        table_name = "letter_likes"
+        indexes = ((("user_id", "letter_id"), True),)
 
 
 class MoodEntry(BaseModel):

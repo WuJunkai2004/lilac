@@ -5,11 +5,13 @@ from peewee import JOIN
 from pydantic import BaseModel
 
 from server.database.connect import Database
-from server.database.models import Image, Letter, MoodType, PublicLetterFlow, User
+from server.database.models import Letter, LetterLike, MoodType, PublicLetterFlow, User
 from server.schema.letter import (
     LetterData,
     LettersData,
     LettersResponse,
+    LikeData,
+    LikeResponse,
     ShareData,
     ShareResponse,
 )
@@ -33,6 +35,10 @@ class FetchRequest(BaseModel):
     page: int = 1
     limit: int = 10
     keyword: Optional[str] = ""
+
+
+class LikeRequest(BaseModel):
+    letter_id: int
 
 
 @router.post("/share", response_model=ShareResponse)
@@ -189,3 +195,47 @@ async def fetch(
             return LettersResponse(
                 success=False, code=500, message=f"获取失败: {str(e)}"
             )
+
+
+@router.post("/like", response_model=LikeResponse)
+async def like(
+    req: LikeRequest,
+    user: Optional[User] = Depends(get_current_user),
+) -> LikeResponse:
+    """
+    信笺点赞接口。
+    使用 LetterLike 表确保幂等性（每个用户对每封信只能点赞一次）。
+    """
+    if not user:
+        return LikeResponse(success=False, code=401, message="未授权或登录已过期")
+
+    db = Database()
+    with db.connection_context():
+        try:
+            letter = Letter.get_or_none(Letter.id == req.letter_id)
+            if not letter:
+                return LikeResponse(success=False, code=404, message="信笺不存在")
+
+            # 1. 检查是否已经点赞
+            like_record, created = LetterLike.get_or_create(
+                user_id=user.id, letter_id=letter.id
+            )
+
+            if not created:
+                # 如果已经存在点赞记录，则不做任何修改，直接返回
+                is_liked = True
+                message = "已经点过赞了"
+            else:
+                # 如果是新点赞，增加点赞数
+                letter.likes_count += 1
+                letter.save()
+                is_liked = True
+                message = "点赞成功"
+
+            return LikeResponse(
+                success=True,
+                message=message,
+                data=LikeData(likes_count=letter.likes_count, is_liked=is_liked),
+            )
+        except Exception as e:
+            return LikeResponse(success=False, code=500, message=f"操作失败: {str(e)}")

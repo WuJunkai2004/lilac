@@ -33,3 +33,12 @@ class LettersData(DataSchema):
 
 class LettersResponse(ResponseSchema[LettersData]):
     pass
+
+
+class LikeData(DataSchema):
+    likes_count: int
+    is_liked: bool
+
+
+class LikeResponse(ResponseSchema[LikeData]):
+    pass
