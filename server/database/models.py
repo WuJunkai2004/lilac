@@ -58,7 +58,9 @@ class Letter(BaseModel):
     user_id = ForeignKeyField(User, backref="letters")
     content = TextField(null=True)
     image = ForeignKeyField(Image, null=True, column_name="image", backref="letters")
-    mood_type = ForeignKeyField(MoodType, null=True, column_name="mood_type", backref="letters")
+    mood_type = ForeignKeyField(
+        MoodType, null=True, column_name="mood_type", backref="letters"
+    )
     latitude = FloatField()
     longitude = FloatField()
     location = CharField()
@@ -133,7 +135,7 @@ class SchoolMoodSummary(BaseModel):
 class PublicLetterFlow(BaseModel):
     id = IntegerField()
     content = TextField(null=True)
-    image = IntegerField(null=True)
+    image_url = CharField(null=True)
     mood_id = IntegerField(null=True)
     latitude = FloatField()
     longitude = FloatField()
@@ -142,7 +144,7 @@ class PublicLetterFlow(BaseModel):
     view_count = IntegerField()
     created_at = DateTimeField()
     username = CharField()
-    avatar = IntegerField(null=True)
+    avatar_url = CharField(null=True)
 
     class Meta:  # type: ignore
         table_name = "v_public_letter_flow"

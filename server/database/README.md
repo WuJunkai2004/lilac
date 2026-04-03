@@ -151,11 +151,13 @@ GROUP BY mt.id, summary_date;
 ```sql
 CREATE VIEW v_public_letter_flow AS
 SELECT 
-    l.id, l.content, l.image, l.latitude, l.longitude, l.mood_type AS mood_id,
+    l.id, l.content, l.latitude, l.longitude, l.mood_type AS mood_id,
     l.location, l.likes_count, l.view_count, l.created_at,
-    u.username, u.avatar
+    u.username, ai.name AS avatar_url, i.name AS image_url
 FROM letters l
 JOIN users u ON l.user_id = u.id
+LEFT JOIN images i ON l.image = i.img_id
+LEFT JOIN images ai ON u.avatar = ai.img_id
 WHERE l.is_public = 1
 ORDER BY l.created_at DESC;
 ```
