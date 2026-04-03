@@ -1,57 +1,87 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { resCheck } from "#/check";
+import storage from "#/storage";
 
 const router = useRouter();
 const selectedLetter = ref(null);
 const showDetails = ref(false);
 
-const mockPins = [
-  {
-    id: 1,
-    x: 30,
-    y: 40,
-    image:
-      "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&w=800&q=80",
-    text: "初春的图书馆，丁香花又要开了。",
-    location: "图书馆",
-  },
-  {
-    id: 2,
-    x: 60,
-    y: 20,
-    image:
-      "https://images.unsplash.com/photo-1523050853023-8c2d27443ef8?auto=format&fit=crop&w=800&q=80",
-    text: "夕阳下的教学楼，心情也变得温暖。",
-    location: "一教",
-  },
-  {
-    id: 3,
-    x: 45,
-    y: 70,
-    image:
-      "https://images.unsplash.com/photo-1498243639359-f75cb752ee47?auto=format&fit=crop&w=800&q=80",
-    text: "深夜的操场，适合慢跑和发呆。",
-    location: "操场",
-  },
-];
+const pins = ref([]);
+const recentLetters = ref([]);
+const hasMore = ref(false);
+const page = ref(1);
+const limit = 4;
 
-const recentLetters = ref([
-  ...mockPins,
-  {
-    id: 4,
-    image:
-      "https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?auto=format&fit=crop&w=800&q=80",
-    text: "咖啡馆里的这杯拉花，让疲惫消散了。",
-    location: "学生活动中心",
-    author: "Lily",
-  },
-]);
+const fetchLetters = async () => {
+  const token = await storage.get("token");
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  fetch("/api/letter/fetch", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      page: page.value,
+      limit: limit,
+      keyword: "",
+    }),
+  })
+    .then(resCheck)
+    .then((res) => {
+      if (res.success) {
+        const mapped = res.data.list.map((item) => ({
+          id: item.letter_id,
+          x: item.longitude,
+          y: item.latitude,
+          image: item.image,
+          text: item.content,
+          location: item.location,
+          author: item.username,
+          avatar: item.avatar || "/iamges/avatar.png",
+          time: item.created_at,
+          likes: item.likes_count,
+        }));
+
+        if (page.value === 1) {
+          recentLetters.value = mapped;
+        } else {
+          recentLetters.value.push(...mapped);
+        }
+
+        // 只有坐标有效的才显示在地图上
+        pins.value = recentLetters.value.filter(
+          (p) => p.x !== undefined && p.y !== undefined,
+        );
+        hasMore.value = res.data.has_more;
+      }
+    })
+    .catch((error) => {
+      console.error("Fetch error:", error);
+    });
+};
+
+const loadMore = () => {
+  if (hasMore.value) {
+    page.value++;
+    fetchLetters();
+  }
+};
 
 const viewLetter = (letter) => {
   selectedLetter.value = letter;
   showDetails.value = true;
 };
+
+onMounted(() => {
+  fetchLetters();
+});
 </script>
 
 <template>
@@ -72,7 +102,7 @@ const viewLetter = (letter) => {
     </PageHeader>
     <div class="scenery-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
       <!-- 校园地图 -->
-      <SchoolMap :pins="mockPins" @pin-click="viewLetter" class="mb-5" />
+      <SchoolMap :pins="pins" @pin-click="viewLetter" class="mb-5" />
 
       <!-- 默认展示大家的分享 -->
       <div>
@@ -94,12 +124,14 @@ const viewLetter = (letter) => {
               最近的丁香回响
             </h3>
             <Button
+              v-if="hasMore"
               label="查看更多"
               icon="pi pi-arrow-right"
               iconPos="right"
               text
               severity="primary"
               class="p-0 text-sm font-bold"
+              @click="loadMore"
             />
           </div>
 

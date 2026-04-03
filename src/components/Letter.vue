@@ -31,7 +31,7 @@ defineProps({
       <div class="p-4 bg-surface-0">
         <div class="flex align-items-center mb-4">
           <Avatar
-            icon="pi pi-user"
+            :image="letter.avatar"
             class="mr-2 bg-primary-50 text-primary shadow-sm"
             shape="circle"
           />
@@ -53,7 +53,7 @@ defineProps({
           <div class="flex gap-4">
             <Button
               icon="pi pi-heart"
-              label="12"
+              :label="String(letter.likes || 0)"
               text
               severity="secondary"
               class="p-0 text-xs gap-1 font-bold"
