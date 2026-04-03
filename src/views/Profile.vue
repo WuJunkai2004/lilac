@@ -119,18 +119,12 @@ const changeAvatar = () => {
 
 <template>
   <div class="profile-page p-4 bg-surface-50 h-full overflow-y-auto">
-    <header class="mb-5 flex align-items-center justify-content-between">
-      <h1 class="text-2xl font-bold text-surface-900 m-0">个人中心</h1>
-      <Button
-        v-if="user"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        text
-        rounded
-        @click="logout"
-        aria-label="Logout"
-      />
-    </header>
+    <CommonHeader
+      title="个人中心"
+      :icon="user ? 'pi pi-sign-out' : ''"
+      icon_label="Logout"
+      @click="logout"
+    />
 
     <div v-if="user" class="user-info-section mb-6 text-center">
       <Card class="border-round-2xl shadow-3 overflow-hidden border-none pt-4">

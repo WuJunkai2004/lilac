@@ -48,17 +48,12 @@ const items = [
 <template>
   <div class="about-page pt-4 px-4 bg-surface-50 h-full flex flex-column">
     <!-- 顶部导航 -->
-    <header class="mb-5 flex align-items-center justify-content-between">
-      <h1 class="text-2xl font-bold text-surface-900 m-0">关于</h1>
-      <Button
-        icon="pi pi-times"
-        rounded
-        text
-        severity="secondary"
-        @click="goBack"
-        aria-label="Close"
-      />
-    </header>
+    <CommonHeader
+      title="关于"
+      icon="pi pi-times"
+      icon_label="Close"
+      @click="goBack"
+    />
 
     <!-- Logo 区域 -->
     <div

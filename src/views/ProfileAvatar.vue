@@ -112,17 +112,12 @@ const goBack = () => {
 
 <template>
   <div class="avatar-edit-page p-4 bg-surface-50 h-full flex flex-column">
-    <header class="mb-5 flex align-items-center justify-content-between">
-      <h1 class="text-2xl font-bold text-surface-900 m-0">修改头像</h1>
-      <Button
-        icon="pi pi-times"
-        rounded
-        text
-        severity="secondary"
-        @click="goBack"
-        aria-label="Close"
-      />
-    </header>
+    <CommonHeader
+      title="修改头像"
+      icon="pi pi-times"
+      icon_label="Close"
+      @click="goBack"
+    />
 
     <div
       class="flex-grow-1 flex flex-column overflow-y-auto align-items-center justify-content-center"
