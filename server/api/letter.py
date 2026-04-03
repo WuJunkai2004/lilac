@@ -1,11 +1,18 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
+from peewee import JOIN
 from pydantic import BaseModel
 
 from server.database.connect import Database
-from server.database.models import Letter, MoodType, User
-from server.schema.letter import ShareData, ShareResponse
+from server.database.models import Image, Letter, MoodType, PublicLetterFlow, User
+from server.schema.letter import (
+    LetterData,
+    LettersData,
+    LettersResponse,
+    ShareData,
+    ShareResponse,
+)
 from server.utils.auth import get_current_user
 from server.utils.image import convert_to_webp
 
@@ -22,8 +29,14 @@ class ShareRequest(BaseModel):
     mood: Optional[str] = Form(None)
 
 
+class FetchRequest(BaseModel):
+    page: int = 1
+    limit: int = 10
+    keyword: Optional[str] = ""
+
+
 @router.post("/share", response_model=ShareResponse)
-async def share_letter(
+async def share(
     req: ShareRequest = Form(),
     user: Optional[User] = Depends(get_current_user),
 ) -> ShareResponse:
@@ -80,3 +93,99 @@ async def share_letter(
             )
         except Exception as e:
             return ShareResponse(success=False, code=500, message=f"发布失败: {e}")
+
+
+@router.post("/fetch", response_model=LettersResponse)
+async def fetch(
+    req: FetchRequest,
+    user: Optional[User] = Depends(get_current_user),
+) -> LettersResponse:
+    """
+    分页获取公开信笺列表。
+    """
+    if req.keyword and len(req.keyword) > 20:
+        return LettersResponse(
+            success=False, code=400, message="搜索关键词长度不能超过20个字符"
+        )
+    if req.keyword and not user:
+        return LettersResponse(success=False, code=401, message="搜索功能需要登录授权")
+
+    db = Database()
+    with db.connection_context():
+        try:
+            # 1. 基础查询拼接
+            query = PublicLetterFlow.select(
+                PublicLetterFlow, MoodType.name.alias("mood_name")
+            ).join(
+                MoodType, JOIN.LEFT_OUTER, on=(PublicLetterFlow.mood_id == MoodType.id)
+            )
+
+            # 2. 处理模糊搜索
+            if req.keyword:
+                query = query.where(
+                    (PublicLetterFlow.content.contains(req.keyword))
+                    | (PublicLetterFlow.location.contains(req.keyword))
+                )
+
+            # 3. 按时间倒序
+            query = query.order_by(PublicLetterFlow.created_at.desc())
+
+            # 采用 "Limit + 1" 法替代耗时的 count()
+            fetch_limit = req.limit + 1
+            offset = (req.page - 1) * req.limit
+
+            # 使用 .dicts() 直接获取字典，极大提升 Python 层面的处理速度
+            raw_data = list(query.offset(offset).limit(fetch_limit).dicts())
+
+            # 判断是否有下一页
+            has_more = len(raw_data) > req.limit
+
+            # 截除多查询出来的那 1 条数据，只保留当前页需要的数据
+            if has_more:
+                raw_data = raw_data[: req.limit]
+
+            # ====== 数据组装区 ======
+            letter_list = []
+            for item in raw_data:
+                # 处理图片路径
+                image_url = None
+                if item.get("image_url"):
+                    image_url = f"/image/{item['image_url']}.webp"
+
+                # 处理头像路径
+                avatar_url = "/image/avatar.webp"
+                if item.get("avatar_url"):
+                    avatar_url = f"/image/{item['avatar_url']}.webp"
+
+                # 处理日期格式
+                created_at_val = item.get("created_at")
+                if hasattr(created_at_val, "strftime"):
+                    created_at_str = created_at_val.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    created_at_str = str(created_at_val)
+
+                letter_list.append(
+                    LetterData(
+                        letter_id=item["id"],
+                        content=item.get("content"),
+                        image=image_url,
+                        latitude=item["latitude"],
+                        longitude=item["longitude"],
+                        location=item["location"],
+                        likes_count=item.get("likes_count", 0),
+                        mood=item.get("mood_name"),
+                        username=item.get("username", "匿名用户"),
+                        avatar=avatar_url,
+                        created_at=created_at_str,
+                    )
+                )
+
+            return LettersResponse(
+                success=True,
+                message="获取成功",
+                data=LettersData(list=letter_list, has_more=has_more),
+            )
+        except Exception as e:
+            return LettersResponse(
+                success=False, code=500, message=f"获取失败: {str(e)}"
+            )

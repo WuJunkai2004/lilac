@@ -1,6 +1,4 @@
-from typing import List
-
-from pydantic import RootModel
+from typing import List, Optional
 
 from server.schema.base import DataSchema, ResponseSchema
 
@@ -15,16 +13,22 @@ class ShareResponse(ResponseSchema[ShareData]):
 
 
 class LetterData(DataSchema):
-    content: str
-    image_url: str
+    letter_id: int
+    content: Optional[str] = None
+    image: Optional[str] = None
     latitude: float
     longitude: float
-    mood: str
+    location: str
+    likes_count: int
+    mood: Optional[str] = None
+    username: str
+    avatar: str
     created_at: str
 
 
-class LettersData(DataSchema, RootModel[List[LetterData]]):
-    pass
+class LettersData(DataSchema):
+    list: List[LetterData]
+    has_more: bool
 
 
 class LettersResponse(ResponseSchema[LettersData]):
