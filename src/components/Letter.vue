@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import storage from "@/utils/storage";
 import { resCheck } from "@/utils/check";
+import { share } from "@/utils/share";
 
 const visible = defineModel("visible", { type: Boolean, default: false });
 const props = defineProps({
@@ -14,6 +15,8 @@ const props = defineProps({
 const isLiked = ref(false);
 const likesCount = ref(0);
 const loading = ref(false);
+const letterRef = ref(null);
+const shareImageUrl = ref(null);
 
 watch(
   () => props.letter,
@@ -27,7 +30,9 @@ watch(
 );
 
 const handleLike = async () => {
-  if (loading.value || !props.letter) return;
+  if (loading.value || !props.letter) {
+    return;
+  }
 
   const token = await storage.get("token");
   if (!token) {
@@ -65,6 +70,19 @@ const handleLike = async () => {
       loading.value = false;
     });
 };
+
+const handleShare = async () => {
+  if (!letterRef.value) {
+    return;
+  }
+
+  try {
+    const dataUrl = await share(letterRef.value);
+    shareImageUrl.value = dataUrl;
+  } catch (error) {
+    console.error("生成图片失败:", error);
+  }
+};
 </script>
 
 <template>
@@ -75,7 +93,7 @@ const handleLike = async () => {
     :showHeader="false"
     class="border-round-3xl overflow-hidden max-w-26rem w-full m-3 p-0"
   >
-    <div v-if="letter" class="overflow-hidden">
+    <div v-if="letter" class="overflow-hidden" ref="letterRef">
       <div class="relative">
         <img :src="letter.image" class="w-full block h-20rem object-cover" />
         <Button
@@ -84,7 +102,7 @@ const handleLike = async () => {
           text
           severity="secondary"
           @click="visible = false"
-          class="absolute top-0 right-0 m-3 w-2.5rem h-2.5rem bg-black-alpha-50 text-white backdrop-blur-sm border-none hover:bg-black-alpha-60 transition-colors"
+          class="absolute top-0 right-0 m-3 w-2.5rem h-2.5rem bg-black-alpha-50 text-white backdrop-blur-sm border-none hover:bg-black-alpha-60 transition-colors no-share"
         />
       </div>
       <div class="p-4 bg-surface-0">
@@ -123,13 +141,16 @@ const handleLike = async () => {
               icon="pi pi-share-alt"
               text
               severity="secondary"
-              class="p-0"
+              class="p-0 no-share"
+              @click="handleShare"
             />
           </div>
         </div>
       </div>
     </div>
   </Dialog>
+
+  <SharePreview :url="shareImageUrl" @close="shareImageUrl = null" />
 </template>
 
 <style scoped>

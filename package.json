@@ -18,6 +18,7 @@
     "@capacitor/preferences": "^8.0.1",
     "@primeuix/themes": "^2.0.3",
     "cropper-next-vue": "^0.1.2",
+    "html-to-image": "^1.11.13",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
