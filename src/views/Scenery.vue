@@ -44,9 +44,10 @@ const fetchLetters = async () => {
           text: item.content,
           location: item.location,
           author: item.username,
-          avatar: item.avatar || "/iamges/avatar.png",
+          avatar: item.avatar || "/images/avatar.webp",
           time: item.created_at,
           likes: item.likes_count,
+          is_liked: item.is_liked,
         }));
 
         if (page.value === 1) {
@@ -153,7 +154,12 @@ onMounted(() => {
                     />
                     <div class="absolute top-0 right-0 m-2">
                       <i
-                        class="pi pi-heart-fill text-pink-400 text-sm drop-shadow-sm"
+                        :class="[
+                          letter.is_liked
+                            ? 'pi pi-heart-fill text-pink-400'
+                            : 'pi pi-heart text-white',
+                          'text-sm drop-shadow-sm',
+                        ]"
                       ></i>
                     </div>
                   </div>

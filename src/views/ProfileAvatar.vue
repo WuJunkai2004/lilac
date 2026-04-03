@@ -59,7 +59,7 @@ const uploadAvatar = async () => {
   const formData = new FormData();
 
   const blob = await cropperRef.value.getCropBlob();
-  formData.append("file", blob, "avatar.png");
+  formData.append("file", blob, "avatar.webp");
 
   fetch("/api/user/avatar", {
     method: "POST",
@@ -153,7 +153,7 @@ const goBack = () => {
             :full="true"
             :crop-layout="{ width: 220, height: 220 }"
             @real-time="refreshPreview"
-            output-type="png"
+            output-type="webp"
           />
         </div>
       </div>

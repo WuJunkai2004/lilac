@@ -1,11 +1,70 @@
 <script setup>
+import { ref, watch } from "vue";
+import storage from "@/utils/storage";
+import { resCheck } from "@/utils/check";
+
 const visible = defineModel("visible", { type: Boolean, default: false });
-defineProps({
+const props = defineProps({
   letter: {
     type: Object,
     default: null,
   },
 });
+
+const isLiked = ref(false);
+const likesCount = ref(0);
+const loading = ref(false);
+
+watch(
+  () => props.letter,
+  (newLetter) => {
+    if (newLetter) {
+      isLiked.value = newLetter.is_liked || false;
+      likesCount.value = newLetter.likes || 0;
+    }
+  },
+  { immediate: true },
+);
+
+const handleLike = async () => {
+  if (loading.value || !props.letter) return;
+
+  const token = await storage.get("token");
+  if (!token) {
+    console.error("未登录，无法点赞");
+    return;
+  }
+
+  loading.value = true;
+  fetch("/api/letter/like", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      letter_id: props.letter.id,
+    }),
+  })
+    .then(resCheck)
+    .then((res) => {
+      if (res.success) {
+        isLiked.value = res.data.is_liked;
+        likesCount.value = res.data.likes_count;
+        // 同步回父组件引用的对象
+        if (props.letter) {
+          props.letter.likes = res.data.likes_count;
+          props.letter.is_liked = res.data.is_liked;
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("点赞失败:", error);
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
 </script>
 
 <template>
@@ -52,11 +111,13 @@ defineProps({
           </span>
           <div class="flex gap-4">
             <Button
-              icon="pi pi-heart"
-              :label="String(letter.likes || 0)"
+              :icon="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'"
+              :label="String(likesCount)"
               text
-              severity="secondary"
+              :severity="isLiked ? 'danger' : 'secondary'"
               class="p-0 text-xs gap-1 font-bold"
+              @click="handleLike"
+              :loading="loading"
             />
             <Button
               icon="pi pi-share-alt"
