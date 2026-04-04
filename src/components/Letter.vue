@@ -1,8 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
-import storage from "@/utils/storage";
-import { resCheck } from "@/utils/check";
-import { share } from "@/utils/share";
+import storage from "#/storage";
+import { resCheck } from "#/check";
 
 const visible = defineModel("visible", { type: Boolean, default: false });
 const props = defineProps({
@@ -16,7 +15,7 @@ const isLiked = ref(false);
 const likesCount = ref(0);
 const loading = ref(false);
 const letterRef = ref(null);
-const shareImageUrl = ref(null);
+const sharePreviewRef = ref(null);
 
 watch(
   () => props.letter,
@@ -72,13 +71,12 @@ const handleLike = async () => {
 };
 
 const handleShare = async () => {
-  if (!letterRef.value) {
+  if (!letterRef.value || !sharePreviewRef.value) {
     return;
   }
 
   try {
-    const dataUrl = await share(letterRef.value);
-    shareImageUrl.value = dataUrl;
+    await sharePreviewRef.value.share(letterRef.value);
   } catch (error) {
     console.error("生成图片失败:", error);
   }
@@ -150,7 +148,7 @@ const handleShare = async () => {
     </div>
   </Dialog>
 
-  <SharePreview :url="shareImageUrl" @close="shareImageUrl = null" />
+  <SharePreview ref="sharePreviewRef" />
 </template>
 
 <style scoped>

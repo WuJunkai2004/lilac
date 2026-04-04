@@ -1,23 +1,48 @@
 <script setup>
-defineProps({
-  url: {
-    type: String,
-    default: null,
-  },
+import { ref } from "vue";
+import { toPng } from "html-to-image";
+
+const imageUrl = ref(null);
+
+const share = async (element) => {
+  if (!element) {
+    throw new Error("Invalid element");
+  }
+
+  try {
+    const dataUrl = await toPng(element, {
+      cacheBust: true,
+      backgroundColor: "#ffffff",
+      filter: (node) => {
+        return !(node.classList && node.classList.contains("no-share"));
+      },
+    });
+    imageUrl.value = dataUrl;
+    return dataUrl;
+  } catch (error) {
+    console.error("生成图片失败:", error);
+    throw error;
+  }
+};
+
+defineExpose({
+  share,
 });
 
-defineEmits(["close"]);
+const close = () => {
+  imageUrl.value = null;
+};
 </script>
 
 <template>
   <div
-    v-if="url"
+    v-if="imageUrl"
     class="share-preview-overlay fixed top-0 left-0 right-0 bottom-0 flex flex-column align-items-center justify-content-center p-4"
-    @click="$emit('close')"
+    @click="close"
   >
     <div class="preview-content flex flex-column align-items-center">
       <img
-        :src="url"
+        :src="imageUrl"
         class="max-w-full border-round-xl shadow-8 mb-4 scalein animation-duration-300"
         style="max-height: 75vh"
         @click.stop
