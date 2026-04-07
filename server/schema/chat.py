@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import List
 
+from pydantic import RootModel
+
 from server.schema.base import DataSchema, ResponseSchema
 
 
@@ -14,8 +16,8 @@ class ChatResponse(ResponseSchema[ChatMessageData]):
     pass
 
 
-class ChatHistoryData(DataSchema):
-    history: List[ChatMessageData]
+class ChatHistoryData(DataSchema, RootModel[List[ChatMessageData]]):
+    pass
 
 
 class ChatHistoryResponse(ResponseSchema[ChatHistoryData]):

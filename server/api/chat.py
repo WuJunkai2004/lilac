@@ -12,6 +12,7 @@ from server.schema.chat import (
     ChatMessageData,
     ChatResponse,
 )
+from server.utils.agent import chat_messages, create_conversation
 from server.utils.auth import get_current_user
 
 router = APIRouter()
@@ -19,6 +20,10 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
+    session_type: str  # 'daily' or 'long-term'
+
+
+class ChatActionRequest(BaseModel):
     session_type: str  # 'daily' or 'long-term'
 
 
@@ -39,18 +44,41 @@ def chat(
     db = Database()
     with db.connection_context():
         # 1. 获取或创建会话
-        session, _ = ChatSession.get_or_create(user=user, session_type=req.session_type)
+        session, created = ChatSession.get_or_create(
+            user_id=user, session_type=req.session_type
+        )
 
-        # 2. 保存用户消息
-        ChatMessage.create(session=session, role="user", content=req.message)
+        # 2. 如果没有 conversation_id，则在 Agent 端创建
+        if not session.conversation_id:
+            try:
+                conv_id = create_conversation(str(user.username))
+                session.conversation_id = conv_id
+                session.save()
+            except Exception as e:
+                return ChatResponse(
+                    success=False, code=500, message=f"创建 AI 会话失败: {str(e)}"
+                )
 
-        # 3. 生成 AI 回复 (当前为占位回复，后续可接入 AI 模型)
-        # TODO: 接入 AI 模型生成回复
-        ai_reply_content = f"你好，我是 Lilac AI 助手。你刚才说：'{req.message}'。这是针对 {req.session_type} 会话的回复。"
+        # 3. 保存用户消息
+        ChatMessage.create(session_id=session, role="user", content=req.message)
 
-        # 4. 保存 AI 回复
+        # 4. 调用 AI 模型生成回复
+        try:
+            response = chat_messages(
+                conversation_id=session.conversation_id,
+                user_id=str(user.username),
+                message=req.message,
+            )
+            data = response.json()
+            # 假设返回格式遵循 OpenAI 风格或者特定的 Agent 风格
+            # 这里根据常见的结构进行初步解析，可能需要根据实际 API 调整
+            ai_reply_content = data.get("answer", "抱歉，我暂时无法回答。")
+        except Exception as e:
+            ai_reply_content = f"AI 服务暂时不可用: {str(e)}"
+
+        # 5. 保存 AI 回复
         ai_message = ChatMessage.create(
-            session=session, role="assistant", content=ai_reply_content
+            session_id=session, role="assistant", content=ai_reply_content
         )
 
         return ChatResponse(
@@ -65,7 +93,7 @@ def chat(
 
 @router.get("/history", response_model=ChatHistoryResponse)
 def history(
-    session_type: str, user: Optional[User] = Depends(get_current_user)
+    req: ChatActionRequest = Depends(), user: Optional[User] = Depends(get_current_user)
 ) -> ChatHistoryResponse:
     """
     获取指定类型的聊天历史。
@@ -75,14 +103,14 @@ def history(
             success=False, code=401, message="未授权或登录已过期"
         )
 
-    if session_type not in ["daily", "long-term"]:
+    if req.session_type not in ["daily", "long-term"]:
         return ChatHistoryResponse(success=False, code=400, message="非法的会话类型")
 
     db = Database()
     with db.connection_context():
-        session = ChatSession.get_or_none(user=user, session_type=session_type)
+        session = ChatSession.get_or_none(user_id=user, session_type=req.session_type)
         if not session:
-            return ChatHistoryResponse(success=True, data=ChatHistoryData(history=[]))
+            return ChatHistoryResponse(success=True, data=ChatHistoryData([]))
 
         messages = (
             ChatMessage.select()
@@ -95,14 +123,12 @@ def history(
             for m in messages
         ]
 
-        return ChatHistoryResponse(
-            success=True, data=ChatHistoryData(history=history_list)
-        )
+        return ChatHistoryResponse(success=True, data=ChatHistoryData(history_list))
 
 
 @router.post("/delete", response_model=ChatActionResponse)
 def delete(
-    session_type: str, user: Optional[User] = Depends(get_current_user)
+    req: ChatActionRequest, user: Optional[User] = Depends(get_current_user)
 ) -> ChatActionResponse:
     """
     删除指定类型的聊天历史。
@@ -110,12 +136,12 @@ def delete(
     if not user:
         return ChatActionResponse(success=False, code=401, message="未授权或登录已过期")
 
-    if session_type not in ["daily", "long-term"]:
+    if req.session_type not in ["daily", "long-term"]:
         return ChatActionResponse(success=False, code=400, message="非法的会话类型")
 
     db = Database()
     with db.connection_context():
-        session = ChatSession.get_or_none(user=user, session_type=session_type)
+        session = ChatSession.get_or_none(user_id=user, session_type=req.session_type)
         if not session:
             return ChatActionResponse(success=True, message="无历史记录可删除")
 
