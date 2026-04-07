@@ -127,6 +127,7 @@ CREATE TABLE chat_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     session_type TEXT CHECK(session_type IN ('daily', 'long-term')) NOT NULL,
+    conversation_id TEXT UNIQUE NOT NULL,  -- 用于关联前端会话，确保每次登录生成一个新的 conversation_id
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

@@ -111,16 +111,20 @@ class AIFeedback(BaseModel):
 
 
 class ChatSession(BaseModel):
+    id = AutoField()
     user_id = ForeignKeyField(User, backref="chat_sessions")
     session_type = CharField()  # 'daily' or 'long-term'
+    conversation_id = CharField(null=True, unique=True)  # Store ID from Agent service
     created_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:  # type: ignore
         table_name = "chat_sessions"
+        indexes = ((("id", "conversation_id"), True),)
         constraints = [Check("session_type IN ('daily', 'long-term')")]
 
 
 class ChatMessage(BaseModel):
+    id = AutoField()
     session_id = ForeignKeyField(ChatSession, backref="messages")
     role = CharField()  # 'user' or 'assistant'
     content = TextField()
