@@ -4,7 +4,7 @@ import random
 from pathlib import Path
 from typing import Callable
 
-from server.task.register import TASKS
+from server.tasks.register import TASKS
 from server.utils.logger import log
 
 
@@ -25,7 +25,7 @@ def _discover_tasks():
         try:
             # 构造完整的导入路径，例如 server.task.clear_image
             # 假设项目根目录在 sys.path 中
-            import_path = f"server.task.{module_name}"
+            import_path = f"server.tasks.{module_name}"
             importlib.import_module(import_path)
             # 移除这里的 log，避免启动时输出过多，但在 register 里可以保留 log
         except Exception as e:

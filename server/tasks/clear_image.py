@@ -1,6 +1,6 @@
 from server.database.connect import Database
 from server.database.models import Image, Letter, User
-from server.task.register import register
+from server.tasks.register import register
 from server.utils.file import folder
 from server.utils.image import get_image_path
 from server.utils.logger import log

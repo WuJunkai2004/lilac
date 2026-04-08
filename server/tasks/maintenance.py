@@ -2,7 +2,7 @@ import datetime
 
 from server.database.connect import Database
 from server.database.models import User
-from server.task.register import register
+from server.tasks.register import register
 from server.utils.logger import log
 
 

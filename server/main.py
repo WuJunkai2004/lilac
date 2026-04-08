@@ -8,7 +8,7 @@ from server.api.image import router as image_router
 from server.api.letter import router as letter_router
 from server.api.user import router as user_router
 from server.database.setup import setup as setup_database
-from server.task.setup import setup as setup_tasks
+from server.tasks.setup import setup as setup_tasks
 from server.utils.logger import log
 
 
