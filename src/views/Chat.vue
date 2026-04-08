@@ -1,3 +1,177 @@
+<script setup>
+import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { resCheck } from "../utils/check";
+import storage from "../utils/storage";
+import { useAlert } from "../utils/alert";
+
+const { alerts, awaitAlert, shows } = useAlert();
+
+const currentChatType = ref("daily");
+const userInput = ref("");
+const isTyping = ref(false);
+const messageContainer = ref(null);
+
+const chatOptions = [
+  { label: "今日", value: "daily" },
+  { label: "长期", value: "long-term" },
+];
+
+const messages = ref({
+  daily: [],
+  "long-term": [],
+});
+
+const currentMessages = computed(() => {
+  return messages.value[currentChatType.value] || [];
+});
+
+const formatTime = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const scrollToBottom = async () => {
+  await nextTick();
+  if (messageContainer.value) {
+    messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+  }
+};
+
+const fetchHistory = async () => {
+  const token = await storage.get("token");
+  if (!token) return;
+
+  fetch(`/api/chat/history?session_type=${currentChatType.value}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then(resCheck)
+    .then((res) => {
+      if (res.success && res.data) {
+        messages.value[currentChatType.value] = res.data.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+          time: formatTime(msg.created_at),
+        }));
+        scrollToBottom();
+      }
+    })
+    .catch((error) => {
+      console.error("获取历史记录失败:", error);
+    });
+};
+
+onMounted(() => {
+  fetchHistory();
+});
+
+watch(currentChatType, () => {
+  if (messages.value[currentChatType.value].length === 0) {
+    fetchHistory();
+  } else {
+    scrollToBottom();
+  }
+});
+
+const confirmClearHistory = async () => {
+  const confirmed = await awaitAlert(
+    "确认清空",
+    `确定要清空当前的${currentChatType.value === "daily" ? "今日" : "长期"}对话记录吗？`,
+    { accept: "确认清除", reject: "取消" },
+  );
+
+  if (confirmed) {
+    const token = await storage.get("token");
+    if (!token) return;
+
+    fetch("/api/chat/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        session_type: currentChatType.value,
+      }),
+    })
+      .then(resCheck)
+      .then((res) => {
+        if (res.success) {
+          messages.value[currentChatType.value] = [];
+          shows("清除成功", "对话历史已清空");
+        }
+      })
+      .catch((error) => {
+        console.error("清除历史失败:", error);
+        alerts("清除失败", "请稍后再试");
+      });
+  }
+};
+
+const sendMessage = async () => {
+  if (!userInput.value.trim() || isTyping.value) return;
+
+  const token = await storage.get("token");
+  if (!token) {
+    alerts("未登录", "请先登录后再聊天");
+    return;
+  }
+
+  const content = userInput.value;
+  const now = new Date().toISOString();
+
+  // 立即在 UI 显示用户消息
+  const userMsg = {
+    role: "user",
+    content: content,
+    time: formatTime(now),
+  };
+  messages.value[currentChatType.value].push(userMsg);
+
+  userInput.value = "";
+  isTyping.value = true;
+  scrollToBottom();
+
+  fetch("/api/chat/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      message: content,
+      session_type: currentChatType.value,
+    }),
+  })
+    .then(resCheck)
+    .then((res) => {
+      isTyping.value = false;
+      if (res.success && res.data) {
+        const aiMsg = {
+          role: res.data.role,
+          content: res.data.content,
+          time: formatTime(res.data.created_at),
+        };
+        messages.value[currentChatType.value].push(aiMsg);
+        scrollToBottom();
+      } else {
+        shows("发送失败", res.message || "服务器异常", "error");
+      }
+    })
+    .catch((error) => {
+      isTyping.value = false;
+      console.error("发送消息失败:", error);
+      shows("发送失败", "网络连接错误", "error");
+    });
+};
+</script>
+
 <template>
   <div class="flex flex-column h-full overflow-hidden">
     <PageHeader
@@ -6,14 +180,24 @@
       :subtitle="currentChatType === 'daily' ? '今日专属' : '深层共鸣'"
     >
       <template #controls>
-        <SelectButton
-          v-model="currentChatType"
-          :options="chatOptions"
-          optionLabel="label"
-          optionValue="value"
-          aria-labelledby="basic"
-          size="small"
-        />
+        <div class="flex gap-2 align-items-center">
+          <SelectButton
+            v-model="currentChatType"
+            :options="chatOptions"
+            optionLabel="label"
+            optionValue="value"
+            aria-labelledby="basic"
+            size="small"
+          />
+          <Button
+            icon="pi pi-trash"
+            severity="secondary"
+            text
+            rounded
+            @click="confirmClearHistory"
+            v-tooltip.bottom="'清除历史'"
+          />
+        </div>
       </template>
     </PageHeader>
     <div
@@ -77,129 +261,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, watch, nextTick } from "vue";
-
-const currentChatType = ref("daily");
-const userInput = ref("");
-const isTyping = ref(false);
-const messageContainer = ref(null);
-
-const chatOptions = [
-  { label: "今日", value: "daily" },
-  { label: "长期", value: "long-term" },
-];
-
-const dailyMessages = ref([
-  {
-    role: "assistant",
-    content: "嗨！我是你今天的 AI 伙伴。今天阳光不错，你感觉怎么样？",
-    time: "09:00",
-  },
-]);
-
-const longTermMessages = ref([
-  {
-    role: "assistant",
-    content: "好久不见。我一直在这里听你倾诉。你最近的情绪似乎有所好转。",
-    time: "昨天",
-  },
-]);
-
-const currentMessages = computed(() => {
-  return currentChatType.value === "daily"
-    ? dailyMessages.value
-    : longTermMessages.value;
-});
-
-const scrollToBottom = async () => {
-  await nextTick();
-  if (messageContainer.value) {
-    messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
-  }
-};
-
-watch(
-  currentMessages,
-  () => {
-    scrollToBottom();
-  },
-  { deep: true },
-);
-
-const sendMessage = async () => {
-  if (!userInput.value.trim()) return;
-
-  const now = new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const userMsg = { role: "user", content: userInput.value, time: now };
-
-  if (currentChatType.value === "daily") {
-    dailyMessages.value.push(userMsg);
-  } else {
-    longTermMessages.value.push(userMsg);
-  }
-
-  const userText = userInput.value;
-  userInput.value = "";
-  isTyping.value = true;
-
-  // Mock AI response
-  setTimeout(() => {
-    isTyping.value = false;
-    const aiMsg = {
-      role: "assistant",
-      content: generateMockAIResponse(userText),
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    if (currentChatType.value === "daily") {
-      dailyMessages.value.push(aiMsg);
-    } else {
-      longTermMessages.value.push(aiMsg);
-    }
-    scrollToBottom();
-  }, 1200);
-};
-
-const generateMockAIResponse = (text) => {
-  if (text.includes("吃") || text.includes("饿") || text.includes("美食")) {
-    const foods = [
-      "二食堂的红烧肉",
-      "清真餐厅的拉面",
-      "学府餐厅的瓦罐汤",
-      "三食堂的烤鱼",
-      "丁香园的自选餐",
-    ];
-    return `既然你提到了美食，今天不如试试${foods[Math.floor(Math.random() * foods.length)]}吧？心情不好的时候，美食最能慰藉人心。`;
-  }
-
-  if (text.includes("去哪") || text.includes("活动") || text.includes("散步")) {
-    const spots = [
-      "图书馆五楼的露台",
-      "荷花池边的长椅",
-      "中心操场的塑胶跑道",
-      "体育馆后的丁香林",
-    ];
-    return `我推荐你去${spots[Math.floor(Math.random() * spots.length)]}走走。那里的环境非常适合放松和沉淀思绪。`;
-  }
-
-  const responses = [
-    "我听到了。有时候我们需要静静地感受这种情绪。",
-    "这听起来很有趣！也许我们可以聊聊更多关于这件事的细节？",
-    "没关系，每个人都会有这样的时候。要不要试试深呼吸？",
-    "我很理解你的感受。在这个校园里，你并不孤单。",
-    "今天又是新的一天，希望我的陪伴能给你带来一点温暖。",
-  ];
-  return responses[Math.floor(Math.random() * responses.length)];
-};
-</script>
 
 <style scoped>
 .text-xxs {
