@@ -7,7 +7,8 @@ from server.api.chat import router as chat_router
 from server.api.image import router as image_router
 from server.api.letter import router as letter_router
 from server.api.user import router as user_router
-from server.database.setup import setup
+from server.database.setup import setup as setup_database
+from server.task.setup import setup as setup_tasks
 from server.utils.logger import log
 
 
@@ -15,8 +16,10 @@ from server.utils.logger import log
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log("app").info("Starting Lilac Backend API...")
-    setup()
+    setup_database()
+    tasks = setup_tasks()
     yield
+    tasks.stop()
     log("app").info("Shutting down Lilac Backend API...")
 
 
