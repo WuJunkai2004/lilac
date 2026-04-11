@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from "vue";
-import { resCheck } from "../utils/check";
-import storage from "../utils/storage";
-import { useAlert } from "../utils/alert";
+import { resCheck } from "#/check";
+import storage from "#/storage";
+import { useAlert } from "#/alert";
 
 const { alerts, awaitAlert, shows } = useAlert();
 
