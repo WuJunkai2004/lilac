@@ -28,7 +28,22 @@ def init():
     db = Database()
     db.connect(True)
     # 初始化默认心情类型
-    pass
+    if not MoodType.select().where(MoodType.name == "活力").exists():
+        moods = (
+            ("活力", "#FF6B6B", "粒子"),
+            ("喜悦", "#FFD93D", "光斑"),
+            ("宁静", "#6BCB77", "流体"),
+            ("忧郁", "#4D96FF", "雨滴"),
+            ("愤怒", "#FF3B3B", "火焰"),
+            ("焦虑", "#845EC2", "震荡波"),
+            ("放松", "#00C9A7", "渐变雾"),
+            ("孤独", "#2C2C54", "暗影"),
+            ("浪漫", "#FF8FAB", "花瓣"),
+            ("神秘", "#6A4C93", "星尘"),
+        )
+        for name, color, element in moods:
+            MoodType.create(name=name, color_code=color, element_type=element)
+        log("database").info("initialized default mood types")
     # 初始化默认用户数据
     if not User.select().where(User.username == "default").exists():
         # 先设置默认头像
