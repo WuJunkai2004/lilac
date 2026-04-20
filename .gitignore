@@ -15,3 +15,6 @@ datas/
 # development files
 *.log
 GEMINI.md
+
+# secret
+secret.py

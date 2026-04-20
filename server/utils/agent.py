@@ -3,10 +3,10 @@ from typing import Any, Dict, Generator, Optional
 
 import httpx
 
+from server.secret import API_KEY
 from server.utils.logger import log
 
 TARGET_BASE = "https://agent.hit.edu.cn/api/proxy/api/v1"
-API_KEY = "d7af895g77ds2k2ajae0"
 
 
 class AgentClient:

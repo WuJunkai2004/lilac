@@ -27,7 +27,6 @@ def _discover_tasks():
             # 假设项目根目录在 sys.path 中
             import_path = f"server.tasks.{module_name}"
             importlib.import_module(import_path)
-            # 移除这里的 log，避免启动时输出过多，但在 register 里可以保留 log
         except Exception as e:
             log("task").error(f"Failed to auto-discover task '{module_name}': {e}")
 

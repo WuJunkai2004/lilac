@@ -1,3 +1,4 @@
+import importlib.util
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,6 +12,12 @@ from server.api.user import router as user_router
 from server.database.setup import setup as setup_database
 from server.tasks.setup import setup as setup_tasks
 from server.utils.logger import log
+
+if not importlib.util.find_spec("server.secret"):
+    log("app").error(
+        "No secret.py found. Please create server/secret.py with necessary configurations."
+    )
+    raise ImportError("Missing server.secret module. Please create server/secret.py.")
 
 
 # 生命周期事件：应用启动时初始化数据库
