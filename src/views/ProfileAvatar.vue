@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
 import debounce from "#/debounce";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
 
 import "cropper-next-vue/style.css";
@@ -69,6 +69,7 @@ const uploadAvatar = async () => {
     body: formData,
   })
     .then(resCheck)
+    .then(authCheck)
     .then(async (res) => {
       if (!res.success) {
         throw new Error(res.message || "上传失败");

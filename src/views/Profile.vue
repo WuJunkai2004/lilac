@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
 
 const router = useRouter();
@@ -60,6 +60,7 @@ const loadUser = async () => {
     },
   })
     .then(resCheck)
+    .then(authCheck)
     .then(async (res) => {
       if (!res.success) {
         throw new Error(res.message || "获取个人资料失败");

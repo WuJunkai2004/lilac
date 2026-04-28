@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from "vue";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import { useAlert } from "#/alert";
 
@@ -52,6 +52,7 @@ const fetchHistory = async () => {
     },
   })
     .then(resCheck)
+    .then(authCheck)
     .then((res) => {
       if (res.success && res.data) {
         messages.value[currentChatType.value] = res.data.map((msg) => ({
@@ -101,6 +102,7 @@ const confirmClearHistory = async () => {
       }),
     })
       .then(resCheck)
+      .then(authCheck)
       .then((res) => {
         if (res.success) {
           messages.value[currentChatType.value] = [];
@@ -150,6 +152,7 @@ const sendMessage = async () => {
     }),
   })
     .then(resCheck)
+    .then(authCheck)
     .then((res) => {
       isTyping.value = false;
       if (res.success && res.data) {

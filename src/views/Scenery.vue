@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 
 const router = useRouter();
@@ -34,6 +34,7 @@ const fetchLetters = async () => {
     }),
   })
     .then(resCheck)
+    .then(authCheck)
     .then((res) => {
       if (res.success) {
         const mapped = res.data.list.map((item) => ({

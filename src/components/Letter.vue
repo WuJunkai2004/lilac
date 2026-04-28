@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import storage from "#/storage";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 
 const visible = defineModel("visible", { type: Boolean, default: false });
 const props = defineProps({
@@ -51,6 +51,7 @@ const handleLike = async () => {
     }),
   })
     .then(resCheck)
+    .then(authCheck)
     .then((res) => {
       if (res.success) {
         isLiked.value = res.data.is_liked;

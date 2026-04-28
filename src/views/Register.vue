@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAlert } from "#/alert";
 import storage from "#/storage";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
@@ -62,6 +62,7 @@ const register = () => {
     }),
   })
     .then(resCheck)
+    .then(authCheck)
     .then(async (res) => {
       if (res.success) {
         await storage.set("token", res.data.token, 0);

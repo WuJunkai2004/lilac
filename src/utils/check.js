@@ -6,4 +6,12 @@ function resCheck(res) {
   return res.json();
 }
 
-export { resCheck };
+function authCheck(res) {
+  if (res.code === 200) {
+    return res;
+  }
+  // use browser native route to login page
+  window.location.href = "/login";
+}
+
+export { resCheck, authCheck };

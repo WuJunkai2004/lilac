@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useAlert } from "#/alert";
 import storage from "#/storage";
-import { resCheck } from "#/check";
+import { resCheck, authCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
@@ -88,6 +88,7 @@ const publishLetter = async () => {
     body: formData,
   })
     .then(resCheck)
+    .then(authCheck)
     .then((res) => {
       if (res.success) {
         shows("发布成功", "你的信笺已化作丁香回响，飘落在校园角落。");
