@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, field_validator
 
 from server.database.models import MoodEntry
@@ -56,7 +56,7 @@ class DetailRequest(BaseModel):
 
 @router.get("/calendar")
 def calendar(
-    request: CalendarRequest = Depends(), user=Depends(get_current_user)
+    request: CalendarRequest = Query(), user=Depends(get_current_user)
 ) -> CalendarResponse:
     if not user:
         return CalendarResponse(success=False, code=401, message="未登录")
@@ -74,10 +74,11 @@ def calendar(
 
     day_mood_list = [
         DayMoodData(
-            date=entry.log_date.strftime("%Y-%m-%d"), mood=entry.mood_type_id.id
+            date=entry.log_date.strftime("%Y-%m-%d"), mood=entry.mood_type_id.name
         )
         for entry in entries
     ]
+    print(day_mood_list)
 
     return CalendarResponse(
         success=True, code=200, message="success", data=CalendarMoodData(day_mood_list)

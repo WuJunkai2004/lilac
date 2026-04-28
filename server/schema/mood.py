@@ -7,7 +7,7 @@ from server.schema.base import DataSchema, ResponseSchema
 
 class DayMoodData(DataSchema):
     date: str
-    mood: int
+    mood: str
 
 
 class CalendarMoodData(DataSchema, RootModel[List[DayMoodData]]):
