@@ -1,21 +1,14 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import storage from "#/storage";
+import { resCheck, authCheck } from "#/check";
+import { useAlert } from "#/alert";
 
 const calenderRef = ref(null);
 const isPublic = ref(false);
+const { alerts } = useAlert();
 
-const moodData = {
-  23: "活力",
-  22: "喜悦",
-  21: "宁静",
-  20: "疲惫",
-  19: "忧郁",
-  18: "生气",
-  17: "焦虑",
-  16: "期待",
-  15: "伤心",
-  14: "轻松",
-};
+const moodData = ref({});
 
 const getAIReviewForDate = (day) => {
   const reviews = {
@@ -60,6 +53,32 @@ const isExperienced = () => {
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return diffDays >= 0;
 };
+
+const loadMoodData = async () => {
+  fetch(`/api/mood/calendar?month=${calenderRef.value.getSelectedMonthStr()}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${await storage.get("token")}`,
+    },
+  })
+    .then(resCheck)
+    .then(authCheck)
+    .then((res) => {
+      moodData.value = {};
+      for (let entry of res.data) {
+        const day = new Date(entry.date).getDate();
+        moodData.value[day] = entry.mood;
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching mood data:", error);
+      alerts("数据加载失败", "无法获取心情数据，请稍后再试");
+    });
+};
+
+onMounted(() => {
+  loadMoodData();
+});
 </script>
 
 <template>
@@ -70,7 +89,11 @@ const isExperienced = () => {
       subtitle="回顾你的丁香足迹，感受情绪起伏"
     />
     <div class="calendar-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
-      <MoodCalendar :value="moodData" ref="calenderRef" />
+      <MoodCalendar
+        :value="moodData"
+        ref="calenderRef"
+        @change-month="loadMoodData"
+      />
 
       <!-- 心理总结卡片 -->
       <section v-if="calenderRef" class="animate-fadein">

@@ -68,6 +68,8 @@ const selectDay = (day) => {
   theDay.value = day;
 };
 
+const emit = defineEmits(["change-month"]);
+
 // 月份切换逻辑
 const monthGoBack = () => {
   if (theMonth.value === 1) {
@@ -81,6 +83,7 @@ const monthGoBack = () => {
   } else {
     theDay.value = 1;
   }
+  emit("change-month", { year: theYear.value, month: theMonth.value });
 };
 const monthGoForward = () => {
   if (theMonth.value === 12) {
@@ -94,6 +97,7 @@ const monthGoForward = () => {
   } else {
     theDay.value = 1;
   }
+  emit("change-month", { year: theYear.value, month: theMonth.value });
 };
 
 // 对外接口
@@ -102,6 +106,10 @@ const getSelectedDate = () =>
 const getSelectedDateStr = () => {
   const pad = (num) => String(num).padStart(2, "0");
   return `${theYear.value}-${pad(theMonth.value)}-${pad(theDay.value)}`;
+};
+const getSelectedMonthStr = () => {
+  const pad = (num) => String(num).padStart(2, "0");
+  return `${theYear.value}-${pad(theMonth.value)}`;
 };
 const getSelectedYear = () => theYear.value;
 const getSelectedMonth = () => theMonth.value;
@@ -112,6 +120,7 @@ defineExpose({
   getSelectedDateStr,
   getSelectedYear,
   getSelectedMonth,
+  getSelectedMonthStr,
   getSelectedDay,
 });
 </script>
