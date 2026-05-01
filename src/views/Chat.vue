@@ -235,7 +235,7 @@ const sendMessage = async () => {
 
         <div
           v-if="isTyping"
-          class="self-start bg-surface-0 text-surface-500 p-3 border-round-right-2xl border-round-top-2xl shadow-1 italic text-sm"
+          class="message-bubble p-3 max-w-85 shadow-2 transition-all self-start bg-surface-0 text-surface-900 border-round-right-2xl border-round-top-2xl"
         >
           <span class="animate-pulse flex align-items-center">
             <i class="pi pi-spin pi-spinner mr-2"></i>
@@ -244,7 +244,7 @@ const sendMessage = async () => {
         </div>
       </div>
 
-      <footer class="p-4 bg-surface-0 shadow-5 z-2">
+      <footer class="px-4 pt-2 pb-2 bg-surface-0 shadow-5 z-2">
         <div class="flex gap-3 align-items-center">
           <InputText
             v-model="userInput"
