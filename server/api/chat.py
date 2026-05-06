@@ -1,10 +1,12 @@
+import datetime
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from server.database.connect import Database
-from server.database.models import ChatMessage, ChatSession, User
+from server.database.models import ChatMessage, ChatSession, MoodEntry, MoodType, User
 from server.schema.chat import (
     ChatActionResponse,
     ChatHistoryData,
@@ -14,6 +16,7 @@ from server.schema.chat import (
 )
 from server.utils.agent import chat_messages, create_conversation
 from server.utils.auth import get_current_user
+from server.utils.logger import log
 
 router = APIRouter()
 
@@ -76,6 +79,31 @@ def chat(
         except Exception as e:
             ai_reply_content = f"AI 服务暂时不可用: {str(e)}"
 
+        # 4.5. 检测 AI 回复是否包含 “当前情绪关键词：[情绪]” 格式的内容，并提取情绪关键词
+        emotion_match = re.search(r"当前情绪关键词：\[(.*?)\]", ai_reply_content)
+        if emotion_match:
+            emotion_keyword = emotion_match.group(1)
+            log.info(f"检测到情绪关键词: {emotion_keyword}")
+            # 从回复中移除关键词部分
+            ai_reply_content = re.sub(
+                r"当前情绪关键词：\[.*?\]", "", ai_reply_content
+            ).strip()
+
+            # 保存当天的情绪
+            try:
+                mood_type = MoodType.get(MoodType.name == emotion_keyword)
+                today = datetime.date.today()
+                mood_entry, created = MoodEntry.get_or_create(
+                    user_id=user,
+                    log_date=today,
+                    defaults={"mood_type_id": mood_type},
+                )
+                if not created:
+                    mood_entry.mood_type_id = mood_type
+                    mood_entry.save()
+            except Exception as e:
+                log.error(f"保存情绪失败: {str(e)}")
+
         # 5. 保存 AI 回复
         ai_message = ChatMessage.create(
             session_id=session, role="assistant", content=ai_reply_content
@@ -84,9 +112,9 @@ def chat(
         return ChatResponse(
             success=True,
             data=ChatMessageData(
-                role=ai_message.role,
-                content=ai_message.content,
-                created_at=ai_message.created_at,
+                role=str(ai_message.role),
+                content=str(ai_message.content),
+                created_at=ai_message.created_at,  # type: ignore
             ),
         )
 
