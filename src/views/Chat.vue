@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import { useAlert } from "#/alert";
+import { markdown } from "#/markdown";
 
 const { alerts, awaitAlert, shows } = useAlert();
 
@@ -220,7 +221,14 @@ const sendMessage = async () => {
               : 'self-start bg-surface-0 text-surface-900 border-round-right-2xl border-round-top-2xl',
           ]"
         >
-          <div class="text-sm line-height-3">{{ msg.content }}</div>
+          <div v-if="msg.role === 'user'" class="text-sm line-height-3">
+            {{ msg.content }}
+          </div>
+          <div
+            v-else
+            class="markdown-content text-sm line-height-3"
+            v-html="markdown(msg.content)"
+          ></div>
           <div
             class="text-xxs mt-2 opacity-60 text-right flex align-items-center justify-content-end"
           >
@@ -279,6 +287,57 @@ const sendMessage = async () => {
 
 .message-bubble {
   word-wrap: break-word;
+}
+
+:deep(.markdown-content) p {
+  margin: 0 0 0.5rem 0;
+}
+
+:deep(.markdown-content) p:last-child {
+  margin-bottom: 0;
+}
+
+:deep(.markdown-content) ul,
+:deep(.markdown-content) ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+:deep(.markdown-content) code {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+:deep(.markdown-content) pre {
+  background-color: #f4f4f4;
+  padding: 0.75rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+:deep(.markdown-content) pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+:deep(.markdown-content) blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+:deep(.markdown-content) img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+:deep(.markdown-content) a {
+  color: var(--p-primary-color);
+  text-decoration: underline;
 }
 
 .animate-pulse {
