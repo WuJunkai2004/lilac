@@ -78,7 +78,6 @@ def calendar(
         )
         for entry in entries
     ]
-    print(day_mood_list)
 
     return CalendarResponse(
         success=True, code=200, message="success", data=CalendarMoodData(day_mood_list)
