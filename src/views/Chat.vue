@@ -246,11 +246,14 @@ const sendMessage = async () => {
 
       <footer class="px-4 pt-2 pb-2 bg-surface-0 shadow-5 z-2">
         <div class="flex gap-3 align-items-center">
-          <InputText
+          <Textarea
             v-model="userInput"
-            @keyup.enter="sendMessage"
+            autoResize
+            rows="1"
+            @keydown.enter.exact.prevent="sendMessage"
             placeholder="聊聊你的心情..."
-            class="flex-1 border-round-3xl bg-surface-50 px-4"
+            class="flex-1 border-round-3xl bg-surface-50 px-4 py-2"
+            style="resize: none; max-height: 200px"
           />
           <Button
             icon="pi pi-send"
