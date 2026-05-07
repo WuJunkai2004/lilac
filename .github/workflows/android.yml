@@ -1,0 +1,82 @@
+name: Build & Sign Android App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: "npm"
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: "17"
+        distribution: "temurin"
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build Web Frontend
+      run: npm run build
+
+    - name: Capacitor Sync
+      run: npx cap sync android
+
+    - name: Generate Android Assets
+      run: npx @capacitor/assets generate --android --assetPath public --iconPath public/logo.png --splashPath public/splash.png
+
+    - name: Build Android Release (APK & AAB)
+      run: |
+        cd android
+        chmod +x ./gradlew
+        ./gradlew assembleRelease
+        ./gradlew bundleRelease
+
+    - name: Sign APK
+      uses: r0adkll/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+    - name: Sign AAB
+      uses: r0adkll/sign-android-release@v1
+      id: sign_aab
+      with:
+        releaseDirectory: android/app/build/outputs/bundle/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+    - name: Upload Signed APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: lilac-echoes-signed-apk
+        path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+
+    - name: Upload Signed AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: lilac-echoes-signed-aab
+        path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
