@@ -38,7 +38,8 @@ jobs:
         run: npx cap sync android
 
       - name: Generate Android Assets
-        run: npx @capacitor/assets generate --android --assetPath public --iconPath public/icon.png --splashPath public/splash.png
+        run: npx @capacitor/assets generate --android --assetPath public
+
 
       - name: Build Android Release (APK & AAB)
         run: |
