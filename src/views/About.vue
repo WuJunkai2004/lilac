@@ -63,7 +63,7 @@ const items = [
 
       <!-- 完整 Logo 展示 -->
       <div class="logo-container z-1 mb-4">
-        <img src="/logo.png" alt="Lilac Logo" class="logo-img" />
+        <img src="/logo-full.png" alt="Lilac Logo" class="logo-img" />
       </div>
 
       <!-- 文字标识 -->

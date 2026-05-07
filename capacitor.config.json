@@ -1,5 +1,13 @@
 {
   "appId": "com.lilac.echoes",
   "appName": "lilac echoes",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK"
+    }
+  },
+  "android": {
+    "backgroundColor": "#ffffff"
+  }
 }
