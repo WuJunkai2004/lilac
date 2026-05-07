@@ -28,6 +28,26 @@ jobs:
           java-version: "21"
           distribution: "temurin"
 
+      - name: Get Version and Git Hash
+        id: vars
+        run: |
+          VERSION=$(cat VERSION.txt)
+          GITHASH=$(git rev-parse --short HEAD)
+          FULL_VERSION="${VERSION}-${GITHASH}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "githash=$GITHASH" >> $GITHUB_OUTPUT
+          echo "full_version=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Update Version in package.json
+        run: |
+          npm version ${{ steps.vars.outputs.version }} --no-git-tag-version
+
+      - name: Update Android VersionName and VersionCode
+        run: |
+          sed -i "s/versionName \".*\"/versionName \"${{ steps.vars.outputs.full_version }}\"/" android/app/build.gradle
+          sed -i "s/versionCode .*/versionCode ${{ steps.vars.outputs.version_code }}/" android/app/build.gradle
+
       - name: Install dependencies
         run: npm install
 
@@ -72,11 +92,16 @@ jobs:
         env:
           BUILD_TOOLS_VERSION: "36.0.0"
 
+      - name: Rename files
+        run: |
+          mv ${{ steps.sign_app.outputs.signedReleaseFile }} lilac-echoes.apk
+          mv ${{ steps.sign_aab.outputs.signedReleaseFile }} lilac-echoes.aab
+
       - name: Upload Signed APK
         uses: actions/upload-artifact@v7
         with:
           name: lilac-echoes-signed-apk
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          path: lilac-echoes.apk
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v3
@@ -84,8 +109,8 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: Release v${{ github.run_number }}
           files: |
-            ${{ steps.sign_app.outputs.signedReleaseFile }}
-            ${{ steps.sign_aab.outputs.signedReleaseFile }}
+            lilac-echoes.apk
+            lilac-echoes.aab
           draft: false
           prerelease: false
         env:
