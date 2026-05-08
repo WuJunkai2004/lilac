@@ -26,6 +26,25 @@ const currentMessages = computed(() => {
   return messages.value[currentChatType.value] || [];
 });
 
+const greetings = [
+  "今天你想和我分享什么？",
+  "此时此刻，你的心情如何？",
+  "有什么想聊聊的吗？我一直都在。",
+  "今天过得怎么样？愿闻其详。",
+  "看到你很高兴，今天有什么新鲜事吗？",
+];
+
+const addGreeting = () => {
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+  messages.value[currentChatType.value] = [
+    {
+      role: "assistant",
+      content: greeting,
+      time: formatTime(new Date().toISOString()),
+    },
+  ];
+};
+
 const formatTime = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -55,13 +74,15 @@ const fetchHistory = async () => {
     .then(resCheck)
     .then(authCheck)
     .then((res) => {
-      if (res.success && res.data) {
+      if (res.success && res.data && res.data.length > 0) {
         messages.value[currentChatType.value] = res.data.map((msg) => ({
           role: msg.role,
           content: msg.content,
           time: formatTime(msg.created_at),
         }));
         scrollToBottom();
+      } else {
+        addGreeting();
       }
     })
     .catch((error) => {
@@ -107,6 +128,7 @@ const confirmClearHistory = async () => {
       .then((res) => {
         if (res.success) {
           messages.value[currentChatType.value] = [];
+          addGreeting();
           shows("清除成功", "对话历史已清空");
         }
       })
