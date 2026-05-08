@@ -82,7 +82,7 @@
 
       <div
         v-if="activeMoods.length > 0"
-        class="mt-4 p-4 surface-card border-round-2xl animate-fadein shadow-2 border-left-3 border-primary"
+        class="mt-4 mb-4 p-4 surface-card border-round-2xl animate-fadein shadow-2 border-left-3 border-primary"
       >
         <div class="flex align-items-center mb-2">
           <i class="pi pi-sparkles text-primary mr-2"></i>
@@ -91,31 +91,6 @@
         <p class="text-color-secondary italic m-0 line-height-3 text-sm">
           "{{ mixedQuote }}"
         </p>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="m-0 text-lg font-semibold text-gray-800 mb-3">
-          校园情绪实验室
-        </h3>
-        <Card class="bg-primary-50 border-none shadow-1 border-round-2xl">
-          <template #content>
-            <div class="flex align-items-center justify-content-between">
-              <div>
-                <div class="font-bold text-primary-900">情绪融合器</div>
-                <div class="text-xs text-primary-600 mt-1">
-                  发现不同心情组合的奥秘
-                </div>
-              </div>
-              <Button
-                label="开始探索"
-                icon="pi pi-compass"
-                rounded
-                size="small"
-                class="shadow-1"
-              />
-            </div>
-          </template>
-        </Card>
       </div>
     </div>
   </div>

@@ -5,7 +5,6 @@ import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
 
 const calenderRef = ref(null);
-const isPublic = ref(false);
 const { alerts } = useAlert();
 
 const moodData = ref({});
@@ -14,6 +13,24 @@ const moodDetail = ref({
   activity: "",
   food: "",
 });
+
+const moodTypes = [
+  { type: "活力", color: "#FFD8A8" },
+  { type: "喜悦", color: "#FFD1DC" },
+  { type: "宁静", color: "#E1BEE7" },
+  { type: "疲惫", color: "#FFE4E1" },
+  { type: "忧郁", color: "#ECEFF1" },
+  { type: "生气", color: "#FFCDD2" },
+  { type: "焦虑", color: "#FFF9C4" },
+  { type: "期待", color: "#DCEDC8" },
+  { type: "伤心", color: "#F5F5F5" },
+  { type: "轻松", color: "#B2EBF2" },
+];
+
+const getMoodColor = (mood) => {
+  const moodInfo = moodTypes.find((m) => m.type === mood);
+  return moodInfo ? moodInfo.color : "transparent";
+};
 
 const getAIReviewForDate = (day) => {
   if (moodDetail.value?.summary) {
@@ -159,9 +176,17 @@ onMounted(() => {
                   }}日 心理总结
                 </h3>
               </div>
-              <div class="flex align-items-center gap-2">
-                <span class="text-xs text-muted-color">公开</span>
-                <ToggleSwitch v-model="isPublic" size="small" />
+              <div
+                v-if="moodData[calenderRef.getSelectedDay()]"
+                class="px-4 py-2 border-round-2xl text-base font-bold shadow-sm"
+                :style="{
+                  backgroundColor: getMoodColor(
+                    moodData[calenderRef.getSelectedDay()]
+                  ),
+                  color: '#4b5563',
+                }"
+              >
+                {{ moodData[calenderRef.getSelectedDay()] }}
               </div>
             </div>
 
