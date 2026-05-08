@@ -16,6 +16,45 @@ export default defineConfig(({ mode }) => {
       Components({
         resolvers: [PrimeVueResolver()],
       }),
+      {
+        name: "inject-runtime-interceptor",
+        transformIndexHtml(html) {
+          // 注入全局运行时拦截器，处理动态获取的 API 和图片路径
+          const interceptor = `
+            <script>
+              (function() {
+                const BASE = 'http://120.26.125.50:18000';
+                const prefixUrl = (url) => {
+                  if (typeof url === 'string' && (url.startsWith('/api/') || url.startsWith('/image/')) && !url.startsWith('http')) {
+                    return BASE + url;
+                  }
+                  return url;
+                };
+                // 1. 拦截 fetch
+                const _fetch = window.fetch;
+                window.fetch = function(url, options) {
+                  return _fetch(prefixUrl(url), options);
+                };
+                // 2. 拦截 XHR
+                const _open = XMLHttpRequest.prototype.open;
+                XMLHttpRequest.prototype.open = function() {
+                  arguments[1] = prefixUrl(arguments[1]);
+                  return _open.apply(this, arguments);
+                };
+                // 3. 拦截 <img> 标签
+                const descriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+                if (descriptor) {
+                  Object.defineProperty(HTMLImageElement.prototype, 'src', {
+                    get: function() { return descriptor.get.call(this); },
+                    set: function(value) { descriptor.set.call(this, prefixUrl(value)); }
+                  });
+                }
+              })();
+            </script>
+          `;
+          return html.replace("</head>", `${interceptor}</head>`);
+        },
+      },
     ],
     resolve: {
       alias: {
@@ -29,28 +68,6 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       reportCompressedSize: false,
       chunkSizeWarningLimit: 2000,
-      rollupOptions: {
-        plugins: [
-          {
-            name: "replace-api-url",
-            transform(code) {
-              // 在打包阶段将代码中的相对路径替换为绝对地址，实现零代码改动穿透
-              let updatedCode = code.replace(
-                /(['"])\/api\//g,
-                "$1http://120.26.125.50:18000/api/"
-              );
-              updatedCode = updatedCode.replace(
-                /(['"])\/image\//g,
-                "$1http://120.26.125.50:18000/image/"
-              );
-              return {
-                code: updatedCode,
-                map: null,
-              };
-            },
-          },
-        ],
-      },
     },
     esbuild: {
       drop: ["console", "debugger"],
