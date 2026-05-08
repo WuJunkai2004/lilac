@@ -81,6 +81,10 @@ const viewLetter = (letter) => {
   showDetails.value = true;
 };
 
+const searchLetters = (keyword) => {
+  router.push("/letters/list");
+};
+
 onMounted(() => {
   fetchLetters();
 });
@@ -99,6 +103,7 @@ onMounted(() => {
           rounded
           severity="primary"
           class="shadow-2 w-3rem h-3rem"
+          @click="searchLetters"
         />
       </template>
     </PageHeader>

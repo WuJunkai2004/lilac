@@ -48,6 +48,12 @@ const routes = [
     component: () => import("@/views/ProfileAvatar.vue"),
   },
   {
+    // 信笺搜索页面
+    path: "/letters/list",
+    name: "LettersList",
+    component: () => import("@/views/LettersList.vue"),
+  },
+  {
     // 关于页面
     path: "/about",
     name: "About",

@@ -15,6 +15,7 @@ const settings = [
     icon: "pi pi-envelope",
     color: "text-yellow-500",
     bg: "bg-yellow-50",
+    route: "/letters/list?type=mine",
   },
   {
     label: "用户设置",
