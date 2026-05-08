@@ -1,21 +1,37 @@
 <script setup>
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { App } from "@capacitor/app";
 
 const route = useRoute();
+const router = useRouter();
+
+const HomeRoute = ["/", "/home"];
+const RootRoute = [
+  "/calendar",
+  "/chat",
+  "/scenery",
+  "/profile",
+  "/login",
+  "/register",
+];
 
 const enableFooter = computed(() => {
-  const showFooterRoutes = [
-    "/calendar",
-    "/chat",
-    "/home",
-    "/scenery",
-    "/profile",
-    "/login",
-    "/register",
-  ];
+  const showFooterRoutes = [...HomeRoute, ...RootRoute];
   console.log("当前路由:", route.path);
   return showFooterRoutes.includes(route.path);
+});
+
+onMounted(() => {
+  App.addListener("backButton", () => {
+    if (Home.HomeRoute.includes(route.path)) {
+      App.exitApp();
+    }
+    if (RootRoute.includes(route.path)) {
+      router.push("/home");
+    }
+    router.back();
+  });
 });
 </script>
 
