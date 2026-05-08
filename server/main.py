@@ -2,6 +2,7 @@ import importlib.util
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from server.api.auth import router as auth_router
 from server.api.chat import router as chat_router
@@ -33,6 +34,15 @@ async def lifespan(app: FastAPI):
 
 # 初始化 FastAPI 应用
 app = FastAPI(title="Lilac Backend API", lifespan=lifespan)
+
+# 跨域配置
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=".*",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 挂载路由
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
