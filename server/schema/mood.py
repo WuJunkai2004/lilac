@@ -18,4 +18,11 @@ class CalendarResponse(ResponseSchema[CalendarMoodData]):
     pass
 
 
+class DetailData(DataSchema):
+    summary: str
+    activity: str
+    food: str
 
+
+class DetailResponse(ResponseSchema[DetailData]):
+    pass

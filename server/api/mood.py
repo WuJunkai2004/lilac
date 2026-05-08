@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, field_validator
 
-from server.database.models import MoodEntry
-from server.schema.mood import CalendarMoodData, CalendarResponse, DayMoodData
+from server.database.models import AIFeedback, MoodEntry
+from server.schema.mood import (
+    CalendarMoodData,
+    CalendarResponse,
+    DayMoodData,
+    DetailData,
+    DetailResponse,
+)
 from server.utils.auth import get_current_user
 
 router = APIRouter()
@@ -24,7 +30,7 @@ class CalendarRequest(BaseModel):
         return v
 
 
-class DetailRequest(BaseModel):
+class DataStrRequest(BaseModel):
     date: str  # 日期，格式为 YYYY-MM-DD
 
     @field_validator("date")
@@ -85,8 +91,36 @@ def calendar(
 
 
 @router.get("/detail")
-def detail(request: DetailRequest = Depends()):
-    pass
+def detail(
+    request: DataStrRequest = Query(), user=Depends(get_current_user)
+) -> DetailResponse:
+    if not user:
+        return DetailResponse(success=False, code=401, message="未登录")
+
+    # 查询该用户在该日期的情绪记录
+    mood_entry = MoodEntry.get_or_none(
+        MoodEntry.user_id == user.id, MoodEntry.log_date == request.date
+    )
+
+    if not mood_entry:
+        return DetailResponse(success=False, code=404, message="未找到该日期的记录")
+
+    # 查询对应的 AI 反馈
+    ai_feedback = AIFeedback.get_or_none(AIFeedback.mood_entry_id == mood_entry.id)
+
+    if not ai_feedback:
+        return DetailResponse(success=False, code=404, message="总结生成中或未找到总结")
+
+    return DetailResponse(
+        success=True,
+        code=200,
+        message="success",
+        data=DetailData(
+            summary=ai_feedback.review_content,
+            activity=ai_feedback.rec_activity or "",
+            food=ai_feedback.rec_food or "",
+        ),
+    )
 
 
 @router.post("visibility")
