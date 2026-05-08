@@ -25,30 +25,64 @@ export default defineConfig(({ mode }) => {
               (function() {
                 const BASE = 'http://120.26.125.50:18000';
                 const prefixUrl = (url) => {
-                  if (typeof url === 'string' && (url.startsWith('/api/') || url.startsWith('/image/')) && !url.startsWith('http')) {
-                    return BASE + url;
+                  if (typeof url !== 'string' || url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
+                    return url;
+                  }
+                  
+                  // 更加宽松的匹配：支持 api, image, images (带或不带前导斜杠)
+                  const patterns = ['/api/', 'api/', '/image/', 'image/', '/images/', 'images/'];
+                  const isMatch = patterns.some(p => url.startsWith(p));
+                  
+                  if (isMatch) {
+                    const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+                    const fullUrl = BASE + normalizedUrl;
+                    console.log('[Interceptor] Prefixing URL:', url, '->', fullUrl);
+                    return fullUrl;
                   }
                   return url;
                 };
+
                 // 1. 拦截 fetch
                 const _fetch = window.fetch;
                 window.fetch = function(url, options) {
                   return _fetch(prefixUrl(url), options);
                 };
+
                 // 2. 拦截 XHR
                 const _open = XMLHttpRequest.prototype.open;
                 XMLHttpRequest.prototype.open = function() {
                   arguments[1] = prefixUrl(arguments[1]);
                   return _open.apply(this, arguments);
                 };
-                // 3. 拦截 <img> 标签
+
+                // 3. 拦截 <img> 标签的 src 属性
                 const descriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-                if (descriptor) {
+                if (descriptor && descriptor.configurable) {
                   Object.defineProperty(HTMLImageElement.prototype, 'src', {
-                    get: function() { return descriptor.get.call(this); },
-                    set: function(value) { descriptor.set.call(this, prefixUrl(value)); }
+                    configurable: true,
+                    enumerable: true,
+                    get: function() {
+                      return descriptor.get ? descriptor.get.call(this) : this.getAttribute('src');
+                    },
+                    set: function(value) {
+                      const prefixed = prefixUrl(value);
+                      if (descriptor.set) {
+                        descriptor.set.call(this, prefixed);
+                      } else {
+                        this.setAttribute('src', prefixed);
+                      }
+                    }
                   });
                 }
+
+                // 4. 拦截 setAttribute 作为一个备选方案
+                const _setAttribute = Element.prototype.setAttribute;
+                Element.prototype.setAttribute = function(name, value) {
+                  if (name === 'src' && (this.tagName === 'IMG' || this.tagName === 'SOURCE')) {
+                    value = prefixUrl(value);
+                  }
+                  return _setAttribute.call(this, name, value);
+                };
               })();
             </script>
           `;

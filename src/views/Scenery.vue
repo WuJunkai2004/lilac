@@ -45,7 +45,7 @@ const fetchLetters = async () => {
           text: item.content,
           location: item.location,
           author: item.username,
-          avatar: item.avatar || "/images/avatar.webp",
+          avatar: item.avatar || "/image/avatar.webp",
           time: item.created_at,
           likes: item.likes_count,
           is_liked: item.is_liked,
