@@ -52,6 +52,7 @@ const items = [
       title="关于"
       icon="pi pi-times"
       icon_label="Close"
+      class="relative z-5"
       @click="goBack"
     />
 
@@ -59,7 +60,7 @@ const items = [
     <div
       class="logo-section flex flex-column align-items-center justify-content-center py-6 relative"
     >
-      <div class="bg-glow absolute"></div>
+      <div class="bg-glow absolute pointer-events-none"></div>
 
       <!-- 完整 Logo 展示 -->
       <div class="logo-container z-1 mb-4">
