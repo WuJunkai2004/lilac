@@ -29,6 +29,28 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       reportCompressedSize: false,
       chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        plugins: [
+          {
+            name: "replace-api-url",
+            transform(code) {
+              // 在打包阶段将代码中的相对路径替换为绝对地址，实现零代码改动穿透
+              let updatedCode = code.replace(
+                /(['"])\/api\//g,
+                "$1http://120.26.125.50:18000/api/"
+              );
+              updatedCode = updatedCode.replace(
+                /(['"])\/image\//g,
+                "$1http://120.26.125.50:18000/image/"
+              );
+              return {
+                code: updatedCode,
+                map: null,
+              };
+            },
+          },
+        ],
+      },
     },
     esbuild: {
       drop: ["console", "debugger"],

@@ -4,7 +4,7 @@
   "webDir": "dist",
   "server": {
     "androidScheme": "http",
-    "hostname": "120.26.125.50:18000",
+    "hostname": "localhost",
     "allowNavigation": [
       "120.26.125.50:18000"
     ]
