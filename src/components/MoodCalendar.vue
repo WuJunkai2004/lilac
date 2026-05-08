@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
+import { getMoodColor } from "#/mood";
 
 const props = defineProps({
   value: {
@@ -9,22 +10,6 @@ const props = defineProps({
 });
 const moodData = computed(() => props.value || {});
 
-const moodTypes = [
-  { type: "活力", color: "#FFD8A8" },
-  { type: "喜悦", color: "#FFD1DC" },
-  { type: "宁静", color: "#E1BEE7" },
-  { type: "疲惫", color: "#FFE4E1" },
-  { type: "忧郁", color: "#ECEFF1" },
-  { type: "生气", color: "#FFCDD2" },
-  { type: "焦虑", color: "#FFF9C4" },
-  { type: "期待", color: "#DCEDC8" },
-  { type: "伤心", color: "#F5F5F5" },
-  { type: "轻松", color: "#B2EBF2" },
-];
-const getMoodColor = (mood) => {
-  const moodInfo = moodTypes.find((m) => m.type === mood);
-  return moodInfo ? moodInfo.color : "transparent";
-};
 const getMoodCellClass = (day) => {
   // 如果是选中的日期，返回主题色背景
   if (day === theDay.value) {

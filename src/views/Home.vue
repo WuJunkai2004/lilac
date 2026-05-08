@@ -98,6 +98,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { moodTypes } from "#/mood";
 
 const currentGlobalMood = ref("宁静");
 const activeMoods = ref([]);
@@ -105,44 +106,12 @@ const currentTime = ref(
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
 );
 
-const moods = [
-  {
-    label: "宁静",
-    icon: "pi pi-cloud",
-    color: "var(--fuchsia-500)",
-    quote: "心如止水，静候花开。",
-  },
-  {
-    label: "活力",
-    icon: "pi pi-sun",
-    color: "var(--orange-500)",
-    quote: "生活充满了无限可能。",
-  },
-  {
-    label: "忧郁",
-    icon: "pi pi-moon",
-    color: "var(--indigo-500)",
-    quote: "在泪水中寻找星光。",
-  },
-  {
-    label: "喜悦",
-    icon: "pi pi-heart-fill",
-    color: "var(--pink-500)",
-    quote: "分享快乐，双倍幸福。",
-  },
-  {
-    label: "愤怒",
-    icon: "pi pi-bolt",
-    color: "var(--red-500)",
-    quote: "冷静是化解愤怒的良方。",
-  },
-  {
-    label: "疲惫",
-    icon: "pi pi-coffee",
-    color: "var(--zinc-500)",
-    quote: "停下来，给自己一个拥抱。",
-  },
-];
+const moods = moodTypes.map((m) => ({
+  label: m.type,
+  icon: m.icon,
+  color: m.color,
+  quote: m.quote,
+}));
 
 const moodBubbles = ref([
   {

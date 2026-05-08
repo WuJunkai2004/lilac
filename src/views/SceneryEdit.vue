@@ -8,6 +8,7 @@ import { resCheck, authCheck } from "#/check";
 
 const router = useRouter();
 const { alerts, shows } = useAlert();
+import { moodTypes } from "#/mood";
 
 // 表单数据
 const capturedImage = ref(null);
@@ -17,13 +18,11 @@ const isPublic = ref(true);
 const onlyImage = ref(false);
 const location = ref({ x: 50, y: 50, name: "" });
 
-const moods = [
-  { label: "宁静", icon: "pi pi-cloud", color: "var(--fuchsia-500)" },
-  { label: "活力", icon: "pi pi-sun", color: "var(--orange-500)" },
-  { label: "忧郁", icon: "pi pi-moon", color: "var(--indigo-500)" },
-  { label: "喜悦", icon: "pi pi-heart-fill", color: "var(--pink-500)" },
-  { label: "疲惫", icon: "pi pi-coffee", color: "var(--zinc-500)" },
-];
+const moods = moodTypes.map(m => ({
+  label: m.type,
+  icon: m.icon,
+  color: m.color
+}));
 
 const takePhoto = async (source = CameraSource.Camera) => {
   try {
