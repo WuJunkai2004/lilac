@@ -2,9 +2,19 @@
   "appId": "com.lilac.echoes",
   "appName": "lilac echoes",
   "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "hostname": "120.26.125.50:18000",
+    "allowNavigation": [
+      "120.26.125.50:18000"
+    ]
+  },
   "plugins": {
     "StatusBar": {
       "style": "DARK"
+    },
+    "CapacitorHttp": {
+      "enabled": true
     }
   },
   "android": {
