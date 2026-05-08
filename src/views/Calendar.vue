@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import storage from "#/storage";
 import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
-import { getMoodColor } from "#/mood";
+import { getMoodColor, getMoodIcon } from "#/mood";
 
 const calenderRef = ref(null);
 const { alerts } = useAlert();
@@ -151,13 +151,21 @@ onMounted(() => {
             <div class="flex align-items-center justify-content-between mb-4">
               <div class="flex align-items-center">
                 <div class="p-3 bg-primary-100 border-round-xl mr-3 shadow-sm">
-                  <i class="pi pi-bolt text-primary text-xl"></i>
+                  <i
+                    :class="[
+                      getMoodIcon(moodData[calenderRef.getSelectedDay()]),
+                      'text-primary text-xl',
+                    ]"
+                  ></i>
                 </div>
-                <h3 class="m-0 text-lg font-bold text-gray-800">
-                  {{ calenderRef.getSelectedMonth() }}月{{
-                    calenderRef.getSelectedDay()
-                  }}日 心理总结
-                </h3>
+                <div class="flex flex-column">
+                  <span class="text-base text-gray-500 font-medium mb-1">
+                    {{ calenderRef.getSelectedMonth() }}月{{
+                      calenderRef.getSelectedDay()
+                    }}日
+                  </span>
+                  <h3 class="m-0 text-lg font-bold text-gray-800">心理总结</h3>
+                </div>
               </div>
               <div
                 v-if="moodData[calenderRef.getSelectedDay()]"
