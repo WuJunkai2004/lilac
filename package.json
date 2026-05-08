@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "vite --host",
     "debug": "vite --host --mode debug",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview --host --port 5400"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.2",
