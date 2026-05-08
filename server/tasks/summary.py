@@ -1,12 +1,9 @@
 import datetime
 import re
 
-from peewee import JOIN, fn
-
 from server.database.connect import Database
 from server.database.models import (
     AIFeedback,
-    ChatMessage,
     ChatSession,
     MoodEntry,
     MoodType,
@@ -18,30 +15,26 @@ from server.utils.logger import log
 
 @register("summary")
 def summary():
+    now = datetime.datetime.now()
+
+    # 晚上 10 点后才执行总结任务
+    if now.hour < 22:
+        return
+
     db = Database()
     with db.connection_context():
-        now = datetime.datetime.now()
-        # 今天凌晨 0 点
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        # 1 小时前
-        one_hour_ago = now - datetime.timedelta(hours=1)
+        # 截止时间为今天晚上 10 点
+        cutoff = today_start + datetime.timedelta(hours=22)
 
         # 查找符合条件的会话：
-        # 1. 创建日期在今天之前 (today_start 之前)
-        # 2. 最后一条消息的时间在 1 小时之前，或者没有消息且会话创建于 1 小时前
+        # 1. 会话类型为 daily
+        # 2. 创建时间在截止时间之前（即今天晚上 10 点之前的会话）
+        # 不再关心是否有最后一条消息在 1 小时前
         query = (
             ChatSession.select()
-            .join(ChatMessage, JOIN.LEFT_OUTER)
-            .where(ChatSession.created_at < today_start)
             .where(ChatSession.session_type == "daily")
-            .group_by(ChatSession.id)
-            .having(
-                (fn.MAX(ChatMessage.created_at) < one_hour_ago)
-                | (
-                    fn.MAX(ChatMessage.created_at).is_null()
-                    & (ChatSession.created_at < one_hour_ago)
-                )
-            )
+            .where(ChatSession.created_at < cutoff)
             .order_by(ChatSession.created_at.asc())
         )
 
@@ -53,10 +46,6 @@ def summary():
             if not success:
                 log("summary").error(f"为会话 {session.id} 插入情绪记录失败")
                 continue
-
-            ChatMessage.delete().where(ChatMessage.session_id == session.id).execute()
-            session.delete_instance()
-            log("summary").info(f"已删除会话 {session.id} 及其关联消息")
 
 
 def insert_mood(session: ChatSession, mood_data: dict) -> bool:
