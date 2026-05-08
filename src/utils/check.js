@@ -7,11 +7,11 @@ function resCheck(res) {
 }
 
 function authCheck(res) {
-  if (res.code === 200) {
-    return res;
+  if (res.code === 401) {
+    // use browser native route to login page
+    window.location.href = "/login";
   }
-  // use browser native route to login page
-  window.location.href = "/login";
+  return res;
 }
 
 export { resCheck, authCheck };

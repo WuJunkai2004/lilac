@@ -64,11 +64,12 @@ const isCurrentMonth = computed(() => {
   );
 });
 
+const emit = defineEmits(["change-month", "change-date"]);
+
 const selectDay = (day) => {
   theDay.value = day;
+  emit("change-date", getSelectedDateStr());
 };
-
-const emit = defineEmits(["change-month"]);
 
 // 月份切换逻辑
 const monthGoBack = () => {
@@ -84,6 +85,7 @@ const monthGoBack = () => {
     theDay.value = 1;
   }
   emit("change-month", { year: theYear.value, month: theMonth.value });
+  emit("change-date", getSelectedDateStr());
 };
 const monthGoForward = () => {
   if (theMonth.value === 12) {
@@ -98,6 +100,7 @@ const monthGoForward = () => {
     theDay.value = 1;
   }
   emit("change-month", { year: theYear.value, month: theMonth.value });
+  emit("change-date", getSelectedDateStr());
 };
 
 // 对外接口

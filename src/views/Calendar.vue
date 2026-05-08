@@ -9,24 +9,30 @@ const isPublic = ref(false);
 const { alerts } = useAlert();
 
 const moodData = ref({});
+const moodDetail = ref({
+  summary: "",
+  activity: "",
+  food: "",
+});
 
 const getAIReviewForDate = (day) => {
-  const reviews = {
-    23: "今天的你像三月的阳光一样充满活力。通过与 AI 伙伴的交流，你展现出了极强的行动力，建议保持这种节奏。",
-    22: "喜悦是今日的主旋律。你分享的校园风景信笺得到了校友的共鸣，这种连接感让你的心理状态非常稳定。",
-    default:
-      "这一天你留下了深沉而宁静的回响。AI 观察到你在平衡学业与自我关怀方面做得很好。",
-  };
+  if (moodDetail.value?.summary) {
+    return moodDetail.value.summary;
+  }
   if (!isExperienced()) {
     return "未来的一切都充满了未知和可能，希望你能在人生这个旅程中保持好奇和开放的心态。";
   }
-  return reviews[day] || reviews.default;
+  return "这一天你留下了深沉而宁静的回响。AI 观察到你在平衡学业与自我关怀方面做得很好。";
 };
 
 const getRecommendation = (day) => {
   return {
-    activity: day % 2 === 0 ? "在荷花池边冥想" : "去图书馆五楼看落日",
-    food: day % 3 === 0 ? "三食堂的瓦罐汤" : "清真餐厅的牛肉拉面",
+    activity:
+      moodDetail.value?.activity ||
+      (day % 2 === 0 ? "在荷花池边冥想" : "去图书馆五楼看落日"),
+    food:
+      moodDetail.value?.food ||
+      (day % 3 === 0 ? "三食堂的瓦罐汤" : "清真餐厅的牛肉拉面"),
   };
 };
 
@@ -48,13 +54,49 @@ const isExperienced = () => {
     return false;
   }
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const selectedDate = calenderRef.value.getSelectedDate();
-  const diffTime = today - selectedDate;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays >= 0;
+  selectedDate.setHours(0, 0, 0, 0);
+  return selectedDate <= today;
+};
+
+const loadMoodDetail = async () => {
+  if (!calenderRef.value) {
+    return;
+  }
+  const selectedDay = calenderRef.value.getSelectedDay();
+  console.log("Selected day:", selectedDay);
+  console.log("the mood data for the day:", moodData.value[selectedDay]);
+  const dateStr = calenderRef.value.getSelectedDateStr();
+
+  if (!isExperienced() || !moodData.value[selectedDay]) {
+    moodDetail.value = { summary: "", activity: "", food: "" };
+  }
+  fetch(`/api/mood/detail?date=${dateStr}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${await storage.get("token")}`,
+    },
+  })
+    .then(resCheck)
+    .then(authCheck)
+    .then((res) => {
+      if (res.success) {
+        moodDetail.value = res.data;
+      } else {
+        moodDetail.value = { summary: "", activity: "", food: "" };
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching mood detail:", error);
+      moodDetail.value = { summary: "", activity: "", food: "" };
+    });
 };
 
 const loadMoodData = async () => {
+  moodData.value = {};
+  moodDetail.value = { summary: "", activity: "", food: "" };
+
   fetch(`/api/mood/calendar?month=${calenderRef.value.getSelectedMonthStr()}`, {
     method: "GET",
     headers: {
@@ -64,11 +106,11 @@ const loadMoodData = async () => {
     .then(resCheck)
     .then(authCheck)
     .then((res) => {
-      moodData.value = {};
       for (let entry of res.data) {
         const day = new Date(entry.date).getDate();
         moodData.value[day] = entry.mood;
       }
+      loadMoodDetail();
     })
     .catch((error) => {
       console.error("Error fetching mood data:", error);
@@ -93,12 +135,13 @@ onMounted(() => {
         :value="moodData"
         ref="calenderRef"
         @change-month="loadMoodData"
+        @change-date="loadMoodDetail"
       />
 
       <!-- 心理总结卡片 -->
       <section v-if="calenderRef" class="animate-fadein">
         <Card
-          class="border-round-3xl shadow-2 overflow-hidden border-none relative"
+          class="border-round-3xl shadow-2 overflow-hidden border-none relative mb-4"
         >
           <template #content>
             <div class="absolute top-0 right-0 p-4 opacity-10">
@@ -128,10 +171,13 @@ onMounted(() => {
               "{{ getAIReviewForDate(calenderRef.getSelectedDay()) }}"
             </p>
 
-            <div v-if="isToday()" class="grid">
-              <div class="col-6">
+            <div
+              v-if="moodDetail.activity || moodDetail.food || isToday()"
+              class="grid"
+            >
+              <div v-if="moodDetail.activity || isToday()" class="col-6">
                 <div
-                  class="p-3 bg-blue-50 border-round-2xl border-1 border-blue-100 shadow-sm"
+                  class="p-3 bg-blue-50 border-round-2xl border-1 border-blue-100 shadow-sm h-full"
                 >
                   <div
                     class="text-xs text-blue-600 mb-2 font-bold flex align-items-center"
@@ -145,9 +191,9 @@ onMounted(() => {
                   </div>
                 </div>
               </div>
-              <div class="col-6">
+              <div v-if="moodDetail.food || isToday()" class="col-6">
                 <div
-                  class="p-3 bg-pink-50 border-round-2xl border-1 border-pink-100 shadow-sm"
+                  class="p-3 bg-pink-50 border-round-2xl border-1 border-pink-100 shadow-sm h-full"
                 >
                   <div
                     class="text-xs text-pink-600 mb-2 font-bold flex align-items-center"
@@ -162,22 +208,6 @@ onMounted(() => {
             </div>
           </template>
         </Card>
-
-        <!-- 情绪趋势图 -->
-        <div class="mt-6 px-2">
-          <div class="flex justify-content-between align-items-end mb-3">
-            <span class="text-sm font-bold text-gray-700">本周情绪稳定性</span>
-            <Tag value="稳步回升 ↑" severity="success" size="small" rounded />
-          </div>
-          <div
-            class="w-full h-1rem bg-surface-200 border-round-3xl overflow-hidden flex shadow-inner"
-          >
-            <div class="h-full bg-primary-400" style="width: 40%"></div>
-            <div class="h-full bg-pink-400" style="width: 25%"></div>
-            <div class="h-full bg-blue-400" style="width: 20%"></div>
-            <div class="h-full bg-orange-400" style="width: 15%"></div>
-          </div>
-        </div>
       </section>
     </div>
   </div>

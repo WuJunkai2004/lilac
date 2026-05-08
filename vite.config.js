@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       Components({
         resolvers: [PrimeVueResolver()],
       }),
-      {
+      mode === "production" && {
         name: "inject-runtime-interceptor",
         transformIndexHtml(html) {
           // 注入全局运行时拦截器，处理动态获取的 API 和图片路径
@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
           return html.replace("</head>", `${interceptor}</head>`);
         },
       },
-    ],
+    ].filter(Boolean),
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
