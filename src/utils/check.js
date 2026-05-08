@@ -1,3 +1,5 @@
+import router from "@/router";
+
 function resCheck(res) {
   if (!res.ok) {
     console.log(res.status);
@@ -8,8 +10,8 @@ function resCheck(res) {
 
 function authCheck(res) {
   if (res.code === 401) {
-    // use browser native route to login page
-    window.location.href = "/login";
+    // use vue-router to login page
+    router.push("/login");
   }
   return res;
 }

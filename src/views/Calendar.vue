@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import storage from "#/storage";
 import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
 import { getMoodColor, getMoodIcon } from "#/mood";
 
 const calenderRef = ref(null);
+const router = useRouter();
 const { alerts } = useAlert();
 
 const moodData = ref({});
@@ -94,6 +96,12 @@ const loadMoodDetail = async () => {
 };
 
 const loadMoodData = async () => {
+  const token = await storage.get("token");
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
   moodData.value = {};
   moodDetail.value = { summary: "", activity: "", food: "" };
 

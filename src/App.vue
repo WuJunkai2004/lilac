@@ -23,10 +23,8 @@ const enableFooter = computed(() => {
 });
 
 onMounted(() => {
-  App.addListener("backButton", ({ event }) => {
-    event.preventDefault();
-
-    if (Home.HomeRoute.includes(route.path)) {
+  App.addListener("backButton", ({ canGoBack }) => {
+    if (HomeRoute.includes(route.path)) {
       App.exitApp();
       return;
     }
