@@ -39,6 +39,23 @@ def summary():
         )
 
         for session in query:
+            log_date = session.created_at.date()
+            # 检查该用户当天是否已经有了非占位符的总结
+            # 占位符 "今日总结还在生成中..." 是在生成明日推荐时填入的，不能算作已生成
+            already_summarized = (
+                AIFeedback.select()
+                .join(MoodEntry)
+                .where(
+                    (MoodEntry.user_id == session.user_id) &
+                    (MoodEntry.log_date == log_date) &
+                    (AIFeedback.review_content != "今日总结还在生成中...")
+                )
+                .exists()
+            )
+
+            if already_summarized:
+                continue
+
             mood_data = summary_mood(session)
             if not mood_data:
                 continue
