@@ -5,9 +5,7 @@
   "server": {
     "androidScheme": "http",
     "hostname": "localhost",
-    "allowNavigation": [
-      "120.26.125.50:18000"
-    ]
+    "allowNavigation": ["120.26.125.50:18000"]
   },
   "plugins": {
     "StatusBar": {
@@ -18,6 +16,7 @@
     }
   },
   "android": {
+    "allowMixedContent": true,
     "backgroundColor": "#ffffff"
   }
 }
