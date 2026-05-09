@@ -1,44 +1,74 @@
 /**
  * 图片缓存工具类
- * 利用 Cache API 实现图片的本地持久化存储
+ * 利用 IndexedDB 实现图片的本地持久化存储（支持非安全上下文 http）
  */
 
-const CACHE_NAME = "lilac-image-cache-v1";
+const DB_NAME = "lilac-image-db";
+const STORE_NAME = "images";
+
+// 初始化数据库
+const dbPromise = new Promise((resolve) => {
+  if (!window.indexedDB) {
+    console.warn("IndexedDB not supported");
+    resolve(null);
+    return;
+  }
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onupgradeneeded = () => {
+    const db = request.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      db.createObjectStore(STORE_NAME);
+    }
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => {
+    console.error("IndexedDB open failed");
+    resolve(null);
+  };
+});
 
 const imageLoader = {
   /**
    * 获取图片的本地 URL
-   * 如果缓存中存在，则返回缓存的 URL
-   * 如果缓存中不存在，则下载图片并存入缓存，然后返回 URL
-   * @param {string} url 原始网络图片 URL
-   * @returns {Promise<string>} 本地可用的图片 URL (Blob URL 或 原始 URL)
    */
   getCachedImage: async (url) => {
     if (!url) return "";
 
     // 如果不是网络图片，直接返回
-    if (!url.startsWith("http") && !url.startsWith("/image")) {
+    if (
+      !url.startsWith("http") &&
+      !url.startsWith("/image") &&
+      !url.startsWith("/api")
+    ) {
       return url;
     }
 
     try {
-      const cache = await caches.open(CACHE_NAME);
-      const cachedResponse = await cache.match(url);
+      const db = await dbPromise;
+      if (!db) return url;
 
-      if (cachedResponse) {
-        // 从缓存中读取
-        const blob = await cachedResponse.blob();
-        return URL.createObjectURL(blob);
+      // 1. 尝试从 IndexedDB 读取
+      const cachedBlob = await new Promise((resolve) => {
+        const transaction = db.transaction(STORE_NAME, "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(url);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => resolve(null);
+      });
+
+      if (cachedBlob instanceof Blob) {
+        return URL.createObjectURL(cachedBlob);
       }
 
-      // 缓存中没有，发起请求
+      // 2. 缓存没有，发起请求
       const response = await fetch(url);
       if (!response.ok) throw new Error("Network response was not ok");
-
-      // 将响应存入缓存 (注意：我们需要克隆响应，因为 response.blob() 会消费掉它)
-      await cache.put(url, response.clone());
-
       const blob = await response.blob();
+
+      // 3. 存入 IndexedDB
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      transaction.objectStore(STORE_NAME).put(blob, url);
+
       return URL.createObjectURL(blob);
     } catch (error) {
       console.warn(
@@ -51,31 +81,47 @@ const imageLoader = {
 
   /**
    * 预加载图片
-   * @param {string[]} urls
    */
   preloadImages: async (urls) => {
-    const cache = await caches.open(CACHE_NAME);
-    const promises = urls.map(async (url) => {
+    const db = await dbPromise;
+    if (!db) return;
+
+    urls.forEach(async (url) => {
       try {
-        const cachedResponse = await cache.match(url);
-        if (!cachedResponse) {
+        // 先检查是否已存在
+        const exists = await new Promise((resolve) => {
+          const transaction = db.transaction(STORE_NAME, "readonly");
+          const request = transaction.objectStore(STORE_NAME).get(url);
+          request.onsuccess = () => resolve(!!request.result);
+          request.onerror = () => resolve(false);
+        });
+
+        if (!exists) {
           const response = await fetch(url);
           if (response.ok) {
-            await cache.put(url, response);
+            const blob = await response.blob();
+            const transaction = db.transaction(STORE_NAME, "readwrite");
+            transaction.objectStore(STORE_NAME).put(blob, url);
           }
         }
       } catch (e) {
         console.error("Preload failed for:", url, e);
       }
     });
-    await Promise.all(promises);
   },
 
   /**
    * 清除所有图片缓存
    */
   clearCache: async () => {
-    return await caches.delete(CACHE_NAME);
+    const db = await dbPromise;
+    if (!db) return;
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const request = transaction.objectStore(STORE_NAME).clear();
+      request.onsuccess = () => resolve(true);
+      request.onerror = () => resolve(false);
+    });
   },
 
   /**
@@ -88,36 +134,30 @@ const imageLoader = {
         const originalSrc = img.src;
         if (
           originalSrc &&
-          (originalSrc.startsWith("http") || originalSrc.startsWith("/api"))
+          (originalSrc.startsWith("http") ||
+            originalSrc.startsWith("/api") ||
+            originalSrc.startsWith("/image"))
         ) {
-          try {
-            const cachedUrl = await imageLoader.getCachedImage(originalSrc);
-            if (cachedUrl !== originalSrc) {
-              img.src = cachedUrl;
-            }
-          } catch (e) {
-            console.error("Directive cache failed:", e);
+          const cachedUrl = await imageLoader.getCachedImage(originalSrc);
+          if (cachedUrl !== originalSrc) {
+            img.src = cachedUrl;
           }
         }
       });
     },
     updated: async (el) => {
-      // 当内容更新时再次检查
       const images = el.querySelectorAll("img");
       images.forEach(async (img) => {
         const originalSrc = img.getAttribute("src");
-        // 如果已经是 blob: 或者是 data:，说明已经处理过或不需要处理
         if (
           originalSrc &&
-          (originalSrc.startsWith("http") || originalSrc.startsWith("/api"))
+          (originalSrc.startsWith("http") ||
+            originalSrc.startsWith("/api") ||
+            originalSrc.startsWith("/image"))
         ) {
-          try {
-            const cachedUrl = await imageLoader.getCachedImage(originalSrc);
-            if (cachedUrl !== originalSrc) {
-              img.src = cachedUrl;
-            }
-          } catch (e) {
-            console.error("Directive cache failed:", e);
+          const cachedUrl = await imageLoader.getCachedImage(originalSrc);
+          if (cachedUrl !== originalSrc) {
+            img.src = cachedUrl;
           }
         }
       });
