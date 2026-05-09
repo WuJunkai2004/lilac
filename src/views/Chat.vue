@@ -250,6 +250,7 @@ const sendMessage = async () => {
             v-else
             class="markdown-content text-sm line-height-3"
             v-html="markdown(msg.content)"
+            v-cached-images
           ></div>
           <div
             class="text-xxs mt-2 opacity-60 text-right flex align-items-center justify-content-end"

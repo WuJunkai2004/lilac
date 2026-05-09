@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
+import imageLoader from "#/imageLoader";
 
 const route = useRoute();
 const router = useRouter();
@@ -70,6 +71,10 @@ const fetchLetters = async (isNewSearch = false) => {
           letters.value.push(...mapped);
         }
         hasMore.value = res.data.has_more;
+
+        // 预加载图片
+        imageLoader.preloadImages(mapped.map((i) => i.image).filter(Boolean));
+        imageLoader.preloadImages(mapped.map((i) => i.avatar).filter(Boolean));
       }
     })
     .catch((error) => {
@@ -148,7 +153,10 @@ onMounted(() => {
             >
               <template #header>
                 <div class="relative h-8rem">
-                  <img :src="letter.image" class="w-full h-full object-cover" />
+                  <CachedImage
+                    :src="letter.image"
+                    class="w-full h-full object-cover"
+                  />
                   <div class="absolute top-0 right-0 m-2">
                     <i
                       :class="[

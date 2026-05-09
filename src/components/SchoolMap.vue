@@ -15,7 +15,7 @@ defineEmits(["pin-click", "map-click"]);
     @click="$emit('map-click', $event)"
   >
     <!-- 校园地图背景：使用 w-full h-auto 确保绝对等比例，不拉伸 -->
-    <img
+    <CachedImage
       src="/map.webp"
       alt="School Map"
       class="block w-full h-auto pointer-events-none"

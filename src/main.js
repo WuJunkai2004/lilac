@@ -11,6 +11,7 @@ import "primeicons/primeicons.css";
 
 import ConfirmationService from "primevue/confirmationservice";
 import ToastService from "primevue/toastservice";
+import imageLoader from "#/imageLoader";
 
 import { definePreset } from "@primeuix/themes";
 const Fuchsia = definePreset(Aura, {
@@ -41,5 +42,6 @@ app.use(PrimeVue, {
 });
 app.use(ConfirmationService);
 app.use(ToastService);
+app.directive("cached-images", imageLoader.directive);
 
 app.mount("#app");

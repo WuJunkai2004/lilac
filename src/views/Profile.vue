@@ -1,13 +1,30 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import storage from "#/storage";
 import { resCheck, authCheck } from "#/check";
 import { useAlert } from "#/alert";
+import imageLoader from "#/imageLoader";
 
 const router = useRouter();
 const user = ref(null);
+const cachedAvatar = ref("");
 const { awaitAlert } = useAlert();
+
+const updateCachedAvatar = async (url) => {
+  if (url) {
+    cachedAvatar.value = await imageLoader.getCachedImage(url);
+  } else {
+    cachedAvatar.value = "";
+  }
+};
+
+watch(
+  () => user.value?.avatar,
+  (newAvatar) => {
+    updateCachedAvatar(newAvatar);
+  },
+);
 
 const settings = [
   {
@@ -133,7 +150,7 @@ const changeAvatar = () => {
         <template #content>
           <div class="avatar-container relative inline-block mb-4">
             <Avatar
-              :image="user.avatar || '/image/avatar.webp'"
+              :image="cachedAvatar || '/image/avatar.webp'"
               class="w-8rem h-8rem shadow-3 border-3 border-primary-100"
               shape="circle"
               @click="changeAvatar"

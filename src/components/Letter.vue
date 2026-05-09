@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import storage from "#/storage";
 import { resCheck, authCheck } from "#/check";
+import imageLoader from "#/imageLoader";
 
 const visible = defineModel("visible", { type: Boolean, default: false });
 const props = defineProps({
@@ -16,6 +17,15 @@ const likesCount = ref(0);
 const loading = ref(false);
 const letterRef = ref(null);
 const sharePreviewRef = ref(null);
+const cachedAvatar = ref("");
+
+const updateAvatar = async (avatarUrl) => {
+  if (avatarUrl) {
+    cachedAvatar.value = await imageLoader.getCachedImage(avatarUrl);
+  } else {
+    cachedAvatar.value = "";
+  }
+};
 
 watch(
   () => props.letter,
@@ -23,6 +33,7 @@ watch(
     if (newLetter) {
       isLiked.value = newLetter.is_liked || false;
       likesCount.value = newLetter.likes || 0;
+      updateAvatar(newLetter.avatar);
     }
   },
   { immediate: true },
@@ -94,7 +105,10 @@ const handleShare = async () => {
   >
     <div v-if="letter" class="overflow-hidden" ref="letterRef">
       <div class="relative">
-        <img :src="letter.image" class="w-full block h-20rem object-cover" />
+        <CachedImage
+          :src="letter.image"
+          class="w-full block h-20rem object-cover"
+        />
         <Button
           icon="pi pi-times"
           rounded
@@ -107,7 +121,7 @@ const handleShare = async () => {
       <div class="p-4 bg-surface-0">
         <div class="flex align-items-center mb-4">
           <Avatar
-            :image="letter.avatar"
+            :image="cachedAvatar"
             class="mr-2 bg-primary-50 text-primary shadow-sm"
             shape="circle"
           />
