@@ -6,6 +6,9 @@
 const DB_NAME = "lilac-image-db";
 const STORE_NAME = "images";
 
+// 用于存储已创建的 blob URL，避免重复创建
+const blobUrlCache = new Map();
+
 // 初始化数据库
 const dbPromise = new Promise((resolve) => {
   if (!window.indexedDB) {
@@ -34,6 +37,11 @@ const imageLoader = {
   getCachedImage: async (url) => {
     if (!url) return "";
 
+    // 如果已经有创建好的 blob URL，直接返回
+    if (blobUrlCache.has(url)) {
+      return blobUrlCache.get(url);
+    }
+
     // 如果不是网络图片，直接返回
     if (
       !url.startsWith("http") &&
@@ -57,7 +65,9 @@ const imageLoader = {
       });
 
       if (cachedBlob instanceof Blob) {
-        return URL.createObjectURL(cachedBlob);
+        const blobUrl = URL.createObjectURL(cachedBlob);
+        blobUrlCache.set(url, blobUrl);
+        return blobUrl;
       }
 
       // 2. 缓存没有，发起请求
@@ -69,7 +79,9 @@ const imageLoader = {
       const transaction = db.transaction(STORE_NAME, "readwrite");
       transaction.objectStore(STORE_NAME).put(blob, url);
 
-      return URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlCache.set(url, blobUrl);
+      return blobUrl;
     } catch (error) {
       console.warn(
         "Image caching failed, falling back to original URL:",
@@ -114,6 +126,10 @@ const imageLoader = {
    * 清除所有图片缓存
    */
   clearCache: async () => {
+    // 释放所有已创建的 blob URL
+    blobUrlCache.forEach((url) => URL.revokeObjectURL(url));
+    blobUrlCache.clear();
+
     const db = await dbPromise;
     if (!db) return;
     return new Promise((resolve) => {

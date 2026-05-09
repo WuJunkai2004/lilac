@@ -12,7 +12,7 @@ const share = async (element) => {
 
   try {
     const dataUrl = await toPng(element, {
-      cacheBust: true,
+      cacheBust: false,
       backgroundColor: "#ffffff",
       filter: (node) => {
         return !(node.classList && node.classList.contains("no-share"));
