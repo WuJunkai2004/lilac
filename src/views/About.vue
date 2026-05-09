@@ -20,7 +20,7 @@ const handleItemClick = (item) => {
 const items = [
   {
     label: "当前版本",
-    value: "V 1.0.0.0401",
+    value: `${__APP_VERSION__}`,
     arrow: false,
     icon: "pi pi-tag",
     color: "text-blue-500",

@@ -1,4 +1,6 @@
 import { fileURLToPath, URL } from "node:url";
+import fs from "node:fs";
+import { execSync } from "node:child_process";
 
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
@@ -6,8 +8,24 @@ import vue from "@vitejs/plugin-vue";
 import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
 
+// 读取版本号
+const version = fs.readFileSync("VERSION.txt", "utf8").trim();
+
+// 获取 Git Hash
+let gitHash = "";
+try {
+  gitHash = execSync("git rev-parse --short HEAD").toString().trim();
+} catch (e) {
+  console.warn("Git not found or not a git repository");
+}
+
 export default defineConfig(({ mode }) => {
   let config = {
+    define: {
+      __APP_VERSION__: JSON.stringify(
+        gitHash ? `${version}-${gitHash}` : version,
+      ),
+    },
     css: {
       devSourcemap: false, // 关闭 CSS source map
     },
@@ -28,11 +46,11 @@ export default defineConfig(({ mode }) => {
                   if (typeof url !== 'string' || url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
                     return url;
                   }
-                  
+
                   // 更加宽松的匹配：支持 api, image, images (带或不带前导斜杠)
                   const patterns = ['/api/', 'api/', '/image/', 'image/', '/images/', 'images/'];
                   const isMatch = patterns.some(p => url.startsWith(p));
-                  
+
                   if (isMatch) {
                     const normalizedUrl = url.startsWith('/') ? url : '/' + url;
                     const fullUrl = BASE + normalizedUrl;

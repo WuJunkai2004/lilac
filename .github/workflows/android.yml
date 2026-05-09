@@ -1,6 +1,9 @@
 name: Build & Sign Android App
 
 on:
+  push:
+    paths:
+      - 'VERSION.txt'
   workflow_dispatch:
 
 concurrency:
