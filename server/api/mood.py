@@ -1,13 +1,20 @@
+from collections import Counter
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
+from peewee import fn
 from pydantic import BaseModel, field_validator
 
-from server.database.models import AIFeedback, MoodEntry
+from server.database.models import AIFeedback, Letter, MoodEntry, MoodType
 from server.schema.mood import (
     CalendarMoodData,
     CalendarResponse,
     DayMoodData,
     DetailData,
     DetailResponse,
+    OverviewData,
+    OverviewListData,
+    OverviewResponse,
 )
 from server.utils.auth import get_current_user
 
@@ -123,6 +130,41 @@ def detail(
     )
 
 
-@router.post("visibility")
-def visibility():
-    pass
+@router.get("/overview")
+def overview(request: DataStrRequest = Query()) -> OverviewResponse:
+    # 获取目标日期和昨天
+    target_date = datetime.strptime(request.date, "%Y-%m-%d").date()
+    yesterday = target_date - timedelta(days=1)
+
+    counts = Counter()
+
+    # 1. 统计昨天和今天 AI 总结的心情数量（按心情类型分组）
+    ai_entries = (
+        MoodEntry.select(MoodType.name, fn.COUNT(MoodEntry.id).alias("cnt"))
+        .join(MoodType, on=(MoodEntry.mood_type_id == MoodType.id))
+        .join(AIFeedback, on=(AIFeedback.mood_entry_id == MoodEntry.id))
+        .where(MoodEntry.log_date << [target_date, yesterday])
+        .group_by(MoodType.name)
+    )
+    for entry in ai_entries:
+        counts[entry.name] += entry.cnt
+
+    # 2. 统计今天用户发布的信笺里面的心情数量（按心情类型分组）
+    letter_entries = (
+        Letter.select(MoodType.name, fn.COUNT(Letter.id).alias("cnt"))
+        .join(MoodType, on=(Letter.mood_type == MoodType.id))
+        .where(Letter.created_at.cast("text").startswith(request.date))
+        .group_by(MoodType.name)
+    )
+    for entry in letter_entries:
+        counts[entry.name] += entry.cnt
+
+    # 构造返回数据
+    data = [OverviewData(mood=mood, count=count) for mood, count in counts.items()]
+
+    return OverviewResponse(
+        success=True,
+        code=200,
+        message="success",
+        data=OverviewListData(data),
+    )

@@ -26,3 +26,16 @@ class DetailData(DataSchema):
 
 class DetailResponse(ResponseSchema[DetailData]):
     pass
+
+
+class OverviewData(DataSchema):
+    mood: str
+    count: int
+
+
+class OverviewListData(DataSchema, RootModel[List[OverviewData]]):
+    pass
+
+
+class OverviewResponse(ResponseSchema[OverviewListData]):
+    pass

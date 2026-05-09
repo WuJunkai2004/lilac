@@ -87,6 +87,7 @@ class LetterLike(BaseModel):
 
 
 class MoodEntry(BaseModel):
+    id = AutoField()
     user_id = ForeignKeyField(User, backref="mood_entries")
     mood_type_id = ForeignKeyField(MoodType, backref="mood_entries")
     log_date = DateField()
@@ -99,6 +100,7 @@ class MoodEntry(BaseModel):
 
 
 class AIFeedback(BaseModel):
+    id = AutoField()
     mood_entry_id = ForeignKeyField(MoodEntry, backref="ai_feedback", unique=True)
     review_content = TextField()
     rec_activity = TextField(null=True)

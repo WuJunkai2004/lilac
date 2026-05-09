@@ -69,7 +69,7 @@ def register(req: AuthRequest) -> AuthResponse:
                 success=True,
                 data=AuthData(
                     token=token,
-                    username=user.username,
+                    username=str(user.username),
                     avatar_url=get_avatar_url(user),
                 ),
             )
