@@ -133,8 +133,11 @@ def detail(
 @router.get("/overview")
 def overview(request: DataStrRequest = Query()) -> OverviewResponse:
     # 获取目标日期和昨天
-    target_date = datetime.strptime(request.date, "%Y-%m-%d").date()
-    yesterday = target_date - timedelta(days=1)
+    today = datetime.strptime(request.date, "%Y-%m-%d").date()
+    yesterday = today - timedelta(days=1)
+
+    today_str = today.strftime("%Y-%m-%d")
+    yesterday_str = yesterday.strftime("%Y-%m-%d")
 
     counts = Counter()
 
@@ -142,12 +145,11 @@ def overview(request: DataStrRequest = Query()) -> OverviewResponse:
     ai_entries = (
         MoodEntry.select(MoodType.name, fn.COUNT(MoodEntry.id).alias("cnt"))
         .join(MoodType, on=(MoodEntry.mood_type_id == MoodType.id))
-        .join(AIFeedback, on=(AIFeedback.mood_entry_id == MoodEntry.id))
-        .where(MoodEntry.log_date << [target_date, yesterday])
-        .group_by(MoodType.name)
+        .where(MoodEntry.log_date << [yesterday_str, today_str])
+        .group_by(MoodEntry.mood_type_id)
     )
-    for entry in ai_entries:
-        counts[entry.name] += entry.cnt
+    for entry in ai_entries.dicts():
+        counts[entry["name"]] += entry["cnt"]
 
     # 2. 统计今天用户发布的信笺里面的心情数量（按心情类型分组）
     letter_entries = (
@@ -156,8 +158,8 @@ def overview(request: DataStrRequest = Query()) -> OverviewResponse:
         .where(Letter.created_at.cast("text").startswith(request.date))
         .group_by(MoodType.name)
     )
-    for entry in letter_entries:
-        counts[entry.name] += entry.cnt
+    for row in letter_entries.dicts():
+        counts[row["name"]] += row["cnt"]
 
     # 构造返回数据
     data = [OverviewData(mood=mood, count=count) for mood, count in counts.items()]
