@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { toPng } from "html-to-image";
+import { Share } from "@capacitor/share";
 
 const imageUrl = ref(null);
 
@@ -32,6 +33,33 @@ defineExpose({
 const close = () => {
   imageUrl.value = null;
 };
+
+const downloadImage = () => {
+  if (!imageUrl.value) {
+    return;
+  }
+  const link = document.createElement("a");
+  link.download = `lilac-share-${new Date().getTime()}.png`;
+  link.href = imageUrl.value;
+  link.click();
+};
+
+const handleShare = async () => {
+  if (!imageUrl.value) {
+    return;
+  }
+  try {
+    await Share.share({
+      title: "分享图片",
+      text: "来自 Lilac Echoes 的分享",
+      files: [imageUrl.value],
+      dialogTitle: "分享到",
+    });
+  } catch (error) {
+    console.error("分享失败:", error);
+    // 如果用户取消分享，通常会进入这里，可以不做特别处理
+  }
+};
 </script>
 
 <template>
@@ -47,11 +75,19 @@ const close = () => {
         style="max-height: 75vh"
         @click.stop
       />
-      <div
-        class="bg-black-alpha-60 text-white px-4 py-2 border-round-full backdrop-blur-md font-medium fadein animation-duration-500"
-      >
-        <i class="pi pi-info-circle mr-2"></i>
-        请长按图片下载或分享
+      <div class="flex gap-3">
+        <Button
+          label="保存图片"
+          icon="pi pi-download"
+          class="p-button-rounded p-button-lg p-button-outlined text-white border-white shadow-5 fadein animation-duration-500"
+          @click.stop="downloadImage"
+        />
+        <Button
+          label="立即分享"
+          icon="pi pi-share-alt"
+          class="p-button-rounded p-button-lg shadow-5 fadein animation-duration-500"
+          @click.stop="handleShare"
+        />
       </div>
     </div>
   </div>

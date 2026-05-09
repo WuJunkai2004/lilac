@@ -18,6 +18,7 @@
     "@capacitor/camera": "^8.2.0",
     "@capacitor/core": "^8.3.2",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.1",
     "@primeuix/themes": "^2.0.3",
     "cropper-next-vue": "^0.2.0",
     "dompurify": "^3.4.2",
