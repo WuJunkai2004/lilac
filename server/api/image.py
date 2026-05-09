@@ -17,4 +17,8 @@ async def get_image(image_name: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
 
-    return FileResponse(path, media_type="image/webp")
+    return FileResponse(
+        path,
+        media_type="image/webp",
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
