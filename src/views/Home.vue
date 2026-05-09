@@ -31,14 +31,18 @@
             ></div>
 
             <!-- 漂浮的气泡 -->
-            <div
-              v-for="(bubble, index) in moodBubbles"
-              :key="index"
-              class="mood-bubble"
-              :style="bubbleStyle(bubble)"
-            ></div>
+            <template v-if="!isLoading">
+              <div
+                v-for="(bubble, index) in moodBubbles"
+                :key="index"
+                class="mood-bubble"
+                :style="bubbleStyle(bubble)"
+              ></div>
+            </template>
+            <ProgressSpinner v-else style="width: 50px; height: 50px" />
 
             <div
+              v-if="!isLoading"
               class="text-center z-2 relative flex flex-column align-items-center justify-content-center h-full"
             >
               <div
@@ -47,7 +51,7 @@
                 {{ currentGlobalMood }}
               </div>
               <Tag
-                value="全校情绪指数：85%"
+                :value="`全校情绪指数：${moodIndex}%`"
                 class="bg-white-alpha-40 border-round-3xl text-primary font-bold backdrop-blur-sm px-3"
               />
             </div>
@@ -99,8 +103,10 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { moodTypes } from "#/mood";
+import { resCheck, authCheck } from "#/check";
 
-const currentGlobalMood = ref("宁静");
+const globalMoodData = ref([]);
+const isLoading = ref(true);
 const activeMoods = ref([]);
 const currentTime = ref(
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -113,40 +119,40 @@ const moods = moodTypes.map((m) => ({
   quote: m.quote,
 }));
 
-const moodBubbles = ref([
-  {
-    size: 100,
-    x: 20,
-    y: 30,
-    color: "var(--fuchsia-300)",
-    opacity: 0.6,
-    delay: "0s",
-  },
-  {
-    size: 150,
-    x: 60,
-    y: 10,
-    color: "var(--purple-200)",
-    opacity: 0.4,
-    delay: "1s",
-  },
-  {
-    size: 80,
-    x: 75,
-    y: 60,
-    color: "var(--fuchsia-400)",
-    opacity: 0.5,
-    delay: "2s",
-  },
-  {
-    size: 120,
-    x: 10,
-    y: 70,
-    color: "var(--pink-200)",
-    opacity: 0.4,
-    delay: "1.5s",
-  },
-]);
+const currentGlobalMood = computed(() => {
+  if (globalMoodData.value.length === 0) return "宁静";
+  // Find the mood with the highest count
+  const sorted = [...globalMoodData.value].sort((a, b) => b.count - a.count);
+  return sorted[0].mood;
+});
+
+const moodIndex = computed(() => {
+  if (globalMoodData.value.length === 0) return 0;
+  const total = globalMoodData.value.reduce((acc, curr) => acc + curr.count, 0);
+  // Simple heuristic for mood index: scale total count to a percentage, capped at 99
+  return Math.min(99, Math.floor(total / 2) + 60);
+});
+
+const moodBubbles = computed(() => {
+  if (globalMoodData.value.length === 0) {
+    return [
+      { size: 100, x: 20, y: 30, color: "var(--fuchsia-300)", opacity: 0.6, delay: "0s" },
+      { size: 150, x: 60, y: 10, color: "var(--purple-200)", opacity: 0.4, delay: "1s" },
+    ];
+  }
+
+  return globalMoodData.value.map((item, index) => {
+    const moodInfo = moodTypes.find((m) => m.type === item.mood) || moodTypes[2];
+    return {
+      size: 60 + Math.min(item.count * 15, 120),
+      x: (index * 37 + 13) % 80,
+      y: (index * 23 + 17) % 60,
+      color: moodInfo.color,
+      opacity: 0.3 + Math.min(item.count * 0.05, 0.4),
+      delay: `${index * 0.7}s`,
+    };
+  });
+});
 
 const cardGradientStyle = {
   background:
@@ -206,7 +212,25 @@ const toggleMood = (mood) => {
   }
 };
 
+const fetchOverview = async () => {
+  try {
+    isLoading.value = true;
+    const today = new Date().toLocaleDateString("sv-SE"); // yyyy-mm-dd in local time
+    const data = await fetch(`/api/mood/overview?date=${today}`)
+      .then(resCheck)
+      .then(authCheck);
+    if (data.success) {
+      globalMoodData.value = data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch mood overview:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 onMounted(() => {
+  fetchOverview();
   setInterval(() => {
     currentTime.value = new Date().toLocaleTimeString([], {
       hour: "2-digit",

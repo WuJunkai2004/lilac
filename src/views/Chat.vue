@@ -63,7 +63,10 @@ const scrollToBottom = async () => {
 
 const fetchHistory = async () => {
   const token = await storage.get("token");
-  if (!token) return;
+  if (!token) {
+    router.push("/login");
+    return;
+  }
 
   fetch(`/api/chat/history?session_type=${currentChatType.value}`, {
     method: "GET",
