@@ -3,8 +3,8 @@
   "appName": "lilac echoes",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https",
-    "hostname": "localhost"
+    "androidScheme": "http",
+    "hostname": "lilac.app"
   },
   "plugins": {
     "StatusBar": {
