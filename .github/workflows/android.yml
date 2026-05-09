@@ -64,11 +64,12 @@ jobs:
         run: npx @capacitor/assets generate --android --assetPath public
 
 
-      - name: Build Android Release (APK & AAB)
+      - name: Build Android App (APK & AAB)
         run: |
           cd android
           chmod +x ./gradlew
           ./gradlew assembleRelease
+          ./gradlew assembleDebug
           ./gradlew bundleRelease
 
       - name: Sign APK
@@ -99,12 +100,16 @@ jobs:
         run: |
           mv ${{ steps.sign_app.outputs.signedReleaseFile }} lilac-echoes.apk
           mv ${{ steps.sign_aab.outputs.signedReleaseFile }} lilac-echoes.aab
+          mv android/app/build/outputs/apk/debug/app-debug.apk lilac-echoes-debug.apk
 
-      - name: Upload Signed APK
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: lilac-echoes-signed-apk
-          path: lilac-echoes.apk
+          name: lilac-echoes-build-artifacts
+          path: |
+            lilac-echoes.apk
+            lilac-echoes.aab
+            lilac-echoes-debug.apk
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v3
@@ -114,6 +119,7 @@ jobs:
           files: |
             lilac-echoes.apk
             lilac-echoes.aab
+            lilac-echoes-debug.apk
           draft: false
           prerelease: false
         env:
