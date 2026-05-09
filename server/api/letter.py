@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from peewee import JOIN
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from server.database.connect import Database
 from server.database.models import Letter, LetterLike, MoodType, PublicLetterFlow, User
@@ -35,6 +35,14 @@ class FetchRequest(BaseModel):
     page: int = 1
     limit: int = 10
     keyword: Optional[str] = ""
+    scope: str = "all"  # all, mine, liked
+
+    @field_validator("scope")
+    @classmethod
+    def validate_scope(cls, v: str):
+        if v not in ["all", "mine", "liked"]:
+            raise ValueError("scope 参数错误，可选值为 [all, mine, liked]")
+        return v
 
 
 class LikeRequest(BaseModel):
@@ -93,8 +101,8 @@ async def share(
                 success=True,
                 message="发布成功",
                 data=ShareData(
-                    letter_id=letter.id,
-                    created_at=letter.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    letter_id=letter.id,  # type: ignore
+                    created_at=letter.created_at.strftime("%Y-%m-%d %H:%M:%S"),  # type: ignore
                 ),
             )
         except Exception as e:
@@ -108,6 +116,7 @@ async def fetch(
 ) -> LettersResponse:
     """
     分页获取公开信笺列表。
+    支持 scope 参数：all (全部公开), mine (我的公开), liked (我点赞的公开)。
     """
     if req.keyword and len(req.keyword) > 20:
         return LettersResponse(
@@ -126,14 +135,30 @@ async def fetch(
                 MoodType, JOIN.LEFT_OUTER, on=(PublicLetterFlow.mood_id == MoodType.id)
             )
 
-            # 2. 处理模糊搜索
+            # 2. 处理 scope 过滤
+            if req.scope == "mine":
+                if not user:
+                    return LettersResponse(
+                        success=False, code=401, message="查看个人信笺需要登录授权"
+                    )
+                query = query.where(PublicLetterFlow.username == user.username)
+            elif req.scope == "liked":
+                if not user:
+                    return LettersResponse(
+                        success=False, code=401, message="查看点赞信笺需要登录授权"
+                    )
+                query = query.join(
+                    LetterLike, on=(PublicLetterFlow.id == LetterLike.letter_id)
+                ).where(LetterLike.user_id == user.id)
+
+            # 3. 处理模糊搜索
             if req.keyword:
                 query = query.where(
                     (PublicLetterFlow.content.contains(req.keyword))
                     | (PublicLetterFlow.location.contains(req.keyword))
                 )
 
-            # 3. 按时间倒序
+            # 4. 按时间倒序
             query = query.order_by(PublicLetterFlow.created_at.desc())
 
             # 采用 "Limit + 1" 法替代耗时的 count()
