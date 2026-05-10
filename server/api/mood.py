@@ -17,6 +17,8 @@ from server.schema.mood import (
     OverviewResponse,
 )
 from server.utils.auth import get_current_user
+from server.utils.cache import cache
+from server.utils.logger import log
 
 router = APIRouter()
 
@@ -131,6 +133,7 @@ def detail(
 
 
 @router.get("/overview")
+@cache.singleCache(expire=3600, only_today=True)
 def overview(request: DataStrRequest = Query()) -> OverviewResponse:
     # 获取目标日期和昨天
     today = datetime.strptime(request.date, "%Y-%m-%d").date()
@@ -139,7 +142,16 @@ def overview(request: DataStrRequest = Query()) -> OverviewResponse:
     today_str = today.strftime("%Y-%m-%d")
     yesterday_str = yesterday.strftime("%Y-%m-%d")
 
-    counts = Counter()
+    counts, cached = cache.init(Counter())
+    if cached:
+        log("cache").info(f"Overview cache hit for date {request.date}")
+        data = [OverviewData(mood=mood, count=count) for mood, count in counts.items()]
+        return OverviewResponse(
+            success=True,
+            code=200,
+            message="success (cached)",
+            data=OverviewListData(data),
+        )
 
     # 1. 统计昨天和今天 AI 总结的心情数量（按心情类型分组）
     ai_entries = (
