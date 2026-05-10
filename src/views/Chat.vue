@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import { useAlert } from "#/alert";
 import { markdown } from "#/markdown";
 
 const { alerts, awaitAlert, shows } = useAlert();
+const router = useRouter();
 
 const currentChatType = ref("daily");
 const userInput = ref("");
