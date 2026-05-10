@@ -1,3 +1,49 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { moodTypes } from "#/mood";
+
+const activeMoods = ref([]);
+const currentTime = ref(
+  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+);
+
+const moods = moodTypes.map((m) => ({
+  label: m.type,
+  icon: m.icon,
+  color: m.color,
+  quote: m.quote,
+}));
+
+const mixedQuote = computed(() => {
+  if (activeMoods.value.length === 0) return "";
+  if (activeMoods.value.length === 1) {
+    return moods.find((m) => m.label === activeMoods.value[0])?.quote;
+  }
+  return "心情在此刻交织。复杂的思绪最终会沉淀为最温柔的丁香回响。";
+});
+
+const toggleMood = (mood) => {
+  const index = activeMoods.value.indexOf(mood.label);
+  if (index > -1) {
+    activeMoods.value.splice(index, 1);
+  } else {
+    if (activeMoods.value.length >= 3) {
+      activeMoods.value.shift();
+    }
+    activeMoods.value.push(mood.label);
+  }
+};
+
+onMounted(() => {
+  setInterval(() => {
+    currentTime.value = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, 1000);
+});
+</script>
+
 <template>
   <div class="flex flex-column h-full">
     <PageHeader
@@ -15,49 +61,7 @@
       </template>
     </PageHeader>
     <div class="home-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
-      <Card
-        class="mood-visualization-container mb-6 border-round-3xl overflow-hidden shadow-4"
-        :style="cardGradientStyle"
-      >
-        <template #content>
-          <div
-            class="relative overflow-hidden flex flex-column align-items-center justify-content-center"
-            style="height: 300px"
-          >
-            <!-- 背景融合效果 -->
-            <div
-              class="mood-fusion-layer absolute inset-0 transition-all duration-1000 border-round-3xl"
-              :style="fusionStyle"
-            ></div>
-
-            <!-- 漂浮的气泡 -->
-            <template v-if="!isLoading">
-              <div
-                v-for="(bubble, index) in moodBubbles"
-                :key="index"
-                class="mood-bubble"
-                :style="bubbleStyle(bubble)"
-              ></div>
-            </template>
-            <ProgressSpinner v-else style="width: 50px; height: 50px" />
-
-            <div
-              v-if="!isLoading"
-              class="text-center z-2 relative flex flex-column align-items-center justify-content-center h-full"
-            >
-              <div
-                class="text-6xl font-bold text-primary-900 mb-2 drop-shadow-sm transition-all"
-              >
-                {{ currentGlobalMood }}
-              </div>
-              <Tag
-                :value="`全校情绪指数：${moodIndex}%`"
-                class="bg-white-alpha-40 border-round-3xl text-primary font-bold backdrop-blur-sm px-3"
-              />
-            </div>
-          </div>
-        </template>
-      </Card>
+      <Lilac :active-moods="activeMoods" />
 
       <section class="mb-6">
         <div class="flex justify-content-between align-items-end mb-4">
@@ -100,164 +104,7 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from "vue";
-import { moodTypes } from "#/mood";
-import { resCheck, authCheck } from "#/check";
-
-const globalMoodData = ref([]);
-const isLoading = ref(true);
-const activeMoods = ref([]);
-const currentTime = ref(
-  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-);
-
-const moods = moodTypes.map((m) => ({
-  label: m.type,
-  icon: m.icon,
-  color: m.color,
-  quote: m.quote,
-}));
-
-const currentGlobalMood = computed(() => {
-  if (globalMoodData.value.length === 0) return "宁静";
-  // Find the mood with the highest count
-  const sorted = [...globalMoodData.value].sort((a, b) => b.count - a.count);
-  return sorted[0].mood;
-});
-
-const moodIndex = computed(() => {
-  if (globalMoodData.value.length === 0) return 0;
-  const total = globalMoodData.value.reduce((acc, curr) => acc + curr.count, 0);
-  // Simple heuristic for mood index: scale total count to a percentage, capped at 99
-  return Math.min(99, Math.floor(total / 2) + 60);
-});
-
-const moodBubbles = computed(() => {
-  if (globalMoodData.value.length === 0) {
-    return [
-      { size: 100, x: 20, y: 30, color: "var(--fuchsia-300)", opacity: 0.6, delay: "0s" },
-      { size: 150, x: 60, y: 10, color: "var(--purple-200)", opacity: 0.4, delay: "1s" },
-    ];
-  }
-
-  return globalMoodData.value.map((item, index) => {
-    const moodInfo = moodTypes.find((m) => m.type === item.mood) || moodTypes[2];
-    return {
-      size: 60 + Math.min(item.count * 15, 120),
-      x: (index * 37 + 13) % 80,
-      y: (index * 23 + 17) % 60,
-      color: moodInfo.color,
-      opacity: 0.3 + Math.min(item.count * 0.05, 0.4),
-      delay: `${index * 0.7}s`,
-    };
-  });
-});
-
-const cardGradientStyle = {
-  background:
-    "radial-gradient(circle at 50% 50%, #fff 0%, var(--fuchsia-50) 100%)",
-};
-
-const fusionStyle = computed(() => {
-  if (activeMoods.value.length === 0) return { background: "transparent" };
-
-  const colors = activeMoods.value.map((label) => {
-    return moods.find((m) => m.label === label)?.color;
-  });
-
-  if (colors.length === 1) {
-    return { background: `color-mix(in srgb, ${colors[0]}, transparent 85%)` };
-  }
-
-  const gradient = colors
-    .map((c) => `color-mix(in srgb, ${c}, transparent 80%)`)
-    .join(", ");
-  return {
-    background: `linear-gradient(135deg, ${gradient})`,
-    filter: "blur(40px)",
-  };
-});
-
-const mixedQuote = computed(() => {
-  if (activeMoods.value.length === 0) return "";
-  if (activeMoods.value.length === 1) {
-    return moods.find((m) => m.label === activeMoods.value[0])?.quote;
-  }
-  return "心情在此刻交织。复杂的思绪最终会沉淀为最温柔的丁香回响。";
-});
-
-const bubbleStyle = (bubble) => ({
-  width: `${bubble.size}px`,
-  height: `${bubble.size}px`,
-  left: `${bubble.x}%`,
-  top: `${bubble.y}%`,
-  backgroundColor: bubble.color,
-  opacity: bubble.opacity,
-  position: "absolute",
-  borderRadius: "50%",
-  filter: "blur(25px)",
-  animation: `float 8s infinite ease-in-out ${bubble.delay}`,
-});
-
-const toggleMood = (mood) => {
-  const index = activeMoods.value.indexOf(mood.label);
-  if (index > -1) {
-    activeMoods.value.splice(index, 1);
-  } else {
-    if (activeMoods.value.length >= 3) {
-      activeMoods.value.shift();
-    }
-    activeMoods.value.push(mood.label);
-  }
-};
-
-const fetchOverview = async () => {
-  try {
-    isLoading.value = true;
-    const today = new Date().toLocaleDateString("sv-SE"); // yyyy-mm-dd in local time
-    const data = await fetch(`/api/mood/overview?date=${today}`)
-      .then(resCheck)
-      .then(authCheck);
-    if (data.success) {
-      globalMoodData.value = data.data;
-    }
-  } catch (error) {
-    console.error("Failed to fetch mood overview:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchOverview();
-  setInterval(() => {
-    currentTime.value = new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }, 1000);
-});
-</script>
-
 <style scoped>
-.mood-bubble {
-  pointer-events: none;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(15px, 25px) scale(1.1);
-  }
-  66% {
-    transform: translate(-10px, 15px) scale(0.9);
-  }
-}
-
 .animate-fadein {
   animation: fadeIn 0.4s ease-out;
 }
@@ -271,17 +118,5 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.drop-shadow-sm {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.bg-white-alpha-40 {
-  background-color: rgba(255, 255, 255, 0.4);
-}
-
-.backdrop-blur-sm {
-  backdrop-filter: blur(4px);
 }
 </style>
