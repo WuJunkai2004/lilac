@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { toPng } from "html-to-image";
 import { Share } from "@capacitor/share";
+import { Filesystem, Directory } from "@capacitor/filesystem";
 
 const imageUrl = ref(null);
 
@@ -49,10 +50,20 @@ const handleShare = async () => {
     return;
   }
   try {
+    // 将 base64 保存为临时文件
+    const fileName = `lilac-share-${new Date().getTime()}.png`;
+    const base64Data = imageUrl.value.split(",")[1];
+
+    const savedFile = await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Cache,
+    });
+
     await Share.share({
       title: "分享图片",
       text: "来自 Lilac Echoes 的分享",
-      files: [imageUrl.value],
+      files: [savedFile.uri],
       dialogTitle: "分享到",
     });
   } catch (error) {
