@@ -18,10 +18,10 @@ const isPublic = ref(true);
 const onlyImage = ref(false);
 const location = ref({ x: 50, y: 50, name: "" });
 
-const moods = moodTypes.map(m => ({
+const moods = moodTypes.map((m) => ({
   label: m.type,
   icon: m.icon,
-  color: m.color
+  color: m.color,
 }));
 
 const takePhoto = async (source = CameraSource.Camera) => {
@@ -145,7 +145,16 @@ onMounted(() => {
           <!-- 操作按钮 -->
           <div class="absolute top-0 right-0 m-3 flex gap-2">
             <Button
-              icon="pi pi-refresh"
+              v-if="onlyImage"
+              icon="pi pi-image"
+              rounded
+              severity="secondary"
+              class="bg-black-alpha-50 text-white backdrop-blur-sm border-none w-2.5rem h-2.5rem"
+              @click="takePhoto(CameraSource.Photos)"
+            />
+            <Button
+              v-if="onlyImage"
+              icon="pi pi-camera"
               rounded
               severity="secondary"
               class="bg-black-alpha-50 text-white backdrop-blur-sm border-none w-2.5rem h-2.5rem"
@@ -174,7 +183,14 @@ onMounted(() => {
                 autoResize
                 class="w-full border-none shadow-none text-lg p-0 focus:shadow-none bg-transparent mb-5"
               />
-              <div class="absolute bottom-0 right-0">
+              <div class="absolute bottom-0 right-0 flex gap-2">
+                <Button
+                  icon="pi pi-image"
+                  rounded
+                  severity="secondary"
+                  class="w-3.5rem h-3.5rem shadow-4"
+                  @click="takePhoto(CameraSource.Photos)"
+                />
                 <Button
                   icon="pi pi-camera"
                   rounded
