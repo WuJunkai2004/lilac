@@ -12,6 +12,7 @@ const props = defineProps({
 
 const globalMoodData = ref([]);
 const isLoading = ref(true);
+const isVideoLoaded = ref(false);
 const canvasRef = ref(null);
 
 const moods = moodTypes.map((m) => ({
@@ -133,6 +134,13 @@ onMounted(() => {
         class="relative overflow-hidden flex flex-column align-items-center justify-content-center border-round-3xl"
         style="aspect-ratio: 1 / 1"
       >
+        <!-- 视频占位图 -->
+        <img
+          v-if="!isVideoLoaded"
+          src="/lilac/background.webp"
+          class="absolute inset-0 w-full h-full object-cover z-0"
+        />
+
         <!-- 视频底层背景 -->
         <video
           src="/lilac/background.mp4"
@@ -140,6 +148,7 @@ onMounted(() => {
           muted
           loop
           playsinline
+          @loadeddata="isVideoLoaded = true"
           class="absolute inset-0 w-full h-full object-cover z-0"
         ></video>
 
