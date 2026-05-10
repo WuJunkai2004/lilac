@@ -107,7 +107,7 @@ const handleShare = async () => {
       <div class="relative">
         <CachedImage
           :src="letter.image"
-          class="w-full block h-20rem object-cover"
+          class="w-full block h-20rem img-contain"
         />
         <Button
           icon="pi pi-times"
@@ -179,8 +179,9 @@ const handleShare = async () => {
   backdrop-filter: blur(8px);
 }
 
-.object-cover {
-  object-fit: cover;
+.img-contain :deep(.cached-image) {
+  object-fit: contain;
+  background-color: var(--surface-50);
 }
 
 .max-w-26rem {
