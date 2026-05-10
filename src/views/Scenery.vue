@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import imageLoader from "#/imageLoader";
+import LetterCover from "../components/LetterCover.vue";
 
 const router = useRouter();
 const selectedLetter = ref(null);
@@ -153,48 +154,7 @@ onMounted(() => {
               :key="letter.id"
               class="col-6 p-2"
             >
-              <Card
-                class="border-round-2xl shadow-1 overflow-hidden transition-all hover:shadow-4 cursor-pointer border-none"
-                @click="viewLetter(letter)"
-              >
-                <template #header>
-                  <div class="relative h-8rem">
-                    <CachedImage
-                      :src="letter.image"
-                      class="w-full h-full object-cover"
-                    />
-                    <div class="absolute top-0 right-0 m-2">
-                      <i
-                        :class="[
-                          letter.is_liked
-                            ? 'pi pi-heart-fill text-pink-400'
-                            : 'pi pi-heart text-white',
-                          'text-sm drop-shadow-sm',
-                        ]"
-                      ></i>
-                    </div>
-                  </div>
-                </template>
-                <template #content>
-                  <p
-                    class="text-xs text-surface-700 m-0 line-height-3 h-3rem overflow-hidden text-overflow-ellipsis font-medium"
-                  >
-                    {{ letter.text }}
-                  </p>
-                </template>
-                <template #footer>
-                  <div
-                    class="flex align-items-center pt-2 border-top-1 border-surface-100"
-                  >
-                    <i
-                      class="pi pi-map-marker text-xs text-surface-400 mr-1"
-                    ></i>
-                    <span class="text-xxs text-surface-400 font-bold">{{
-                      letter.location
-                    }}</span>
-                  </div>
-                </template>
-              </Card>
+              <LetterCover :letter="letter" @click="viewLetter(letter)" />
             </div>
           </div>
         </section>
@@ -206,16 +166,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-.object-cover {
-  object-fit: cover;
-}
-
-.text-xxs {
-  font-size: 0.65rem;
-}
-
-.drop-shadow-sm {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-</style>
+<style scoped></style>

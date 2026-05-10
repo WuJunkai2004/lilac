@@ -31,3 +31,6 @@
 - [x] 适配 Android 状态栏与手势
 - [x] 性能优化 (图片压缩、资源预加载)
 - [ ] 最终测试与 Bug 修复
+
+## 一些优化
+1. object-fit: cover 导致图片出现大量锯齿，应为Chromium的一个已知问题，暂时没有解决方案，后续可以考虑使用其他方式实现图片缩放。见[LetterCover.vue](./src/components/LetterCover.vue)
