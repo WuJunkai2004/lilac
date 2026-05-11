@@ -39,6 +39,7 @@ const settings = [
     icon: "pi pi-cog",
     color: "text-blue-500",
     bg: "bg-blue-50",
+    route: "/profile/settings",
   },
   {
     label: "关于 lilac echoes",
@@ -57,6 +58,8 @@ const loadUser = async () => {
     return;
   }
 
+  const signature = (await storage.get("signature")) || "心怀丁香，回响校园";
+
   // 1. 尝试从 storage 获取 profile (有效期 1 小时)
   const profile = await storage.get("profile");
   if (profile) {
@@ -67,6 +70,7 @@ const loadUser = async () => {
       letterCount: profile.letter_count || 0,
       totalLikes: profile.total_likes || 0,
       moodDayCount: profile.mood_day_count || 0,
+      signature: signature,
     };
     return;
   }
@@ -97,6 +101,7 @@ const loadUser = async () => {
         letterCount: data.letter_count || 0,
         totalLikes: data.total_likes || 0,
         moodDayCount: data.mood_day_count || 0,
+        signature: signature,
       };
     })
     .catch(async (error) => {
@@ -108,6 +113,7 @@ const loadUser = async () => {
         letterCount: 0,
         totalLikes: 0,
         moodDayCount: 0,
+        signature: signature,
       };
     });
 };
@@ -160,7 +166,7 @@ const changeAvatar = () => {
             {{ user.username }}
           </h2>
           <p class="text-sm text-surface-500 italic mb-5">
-            "心怀丁香，回响校园"
+            "{{ user.signature }}"
           </p>
 
           <Divider />

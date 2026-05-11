@@ -42,6 +42,12 @@ const routes = [
     component: () => import("@/views/Profile.vue"),
   },
   {
+    // 用户设置页面
+    path: "/profile/settings",
+    name: "Settings",
+    component: () => import("@/views/Settings.vue"),
+  },
+  {
     // 修改头像页面
     path: "/profile/avatar",
     name: "ProfileAvatar",
