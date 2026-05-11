@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime
 from typing import Optional
 
@@ -8,6 +9,16 @@ from server.database.connect import Database
 from server.database.models import User
 
 security = HTTPBearer(auto_error=False)
+
+
+def get_password_hash(password: str) -> str:
+    """简单的 SHA-256 密码哈希，生产环境建议使用 passlib[bcrypt]"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """验证密码"""
+    return get_password_hash(plain_password) == hashed_password
 
 
 def get_current_user(

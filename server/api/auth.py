@@ -1,4 +1,3 @@
-import hashlib
 import re
 import secrets
 from datetime import datetime, timedelta
@@ -9,7 +8,11 @@ from pydantic import BaseModel, Field, field_validator
 from server.database.connect import Database
 from server.database.models import User
 from server.schema.auth import AuthData, AuthResponse
-from server.utils.auth import get_avatar_url
+from server.utils.auth import (
+    get_avatar_url,
+    get_password_hash,
+    verify_password,
+)
 
 router = APIRouter()
 
@@ -27,16 +30,6 @@ class AuthRequest(BaseModel):
         if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,31}$", v):
             raise ValueError("密码必须至少包含一个字母和一个数字")
         return v
-
-
-def get_password_hash(password: str) -> str:
-    """简单的 SHA-256 密码哈希，生产环境建议使用 passlib[bcrypt]"""
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """验证密码"""
-    return get_password_hash(plain_password) == hashed_password
 
 
 def generate_token() -> str:

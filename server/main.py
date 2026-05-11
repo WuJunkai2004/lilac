@@ -9,6 +9,7 @@ from server.api.chat import router as chat_router
 from server.api.image import router as image_router
 from server.api.letter import router as letter_router
 from server.api.mood import router as mood_router
+from server.api.profile import router as profile_router
 from server.api.user import router as user_router
 from server.database.setup import setup as setup_database
 from server.tasks.setup import setup as setup_tasks
@@ -50,6 +51,7 @@ app.include_router(chat_router, prefix="/api/chat", tags=["Chat System"])
 app.include_router(image_router, prefix="/image", tags=["Image Resources"])
 app.include_router(letter_router, prefix="/api/letter", tags=["Campus Letter"])
 app.include_router(mood_router, prefix="/api/mood", tags=["Mood System"])
+app.include_router(profile_router, prefix="/api/profile", tags=["Profile Management"])
 app.include_router(user_router, prefix="/api/user", tags=["User System"])
 
 
