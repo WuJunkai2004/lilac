@@ -2,8 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { moodTypes } from "#/mood";
 import { resCheck, authCheck } from "#/check";
-import SceneManager from "~/core/SceneManager";
-import DandelionEffect from "~/effects/DandelionEffect";
+import SceneManager from "@/animations/core/SceneManager";
+import DandelionEffect from "@/animations/effects/DandelionEffect";
+import CloudEffect from "@/animations/effects/CloudEffect";
 
 const props = defineProps({
   activeMoods: {
@@ -137,8 +138,11 @@ const initAnimations = () => {
 
   animationManager = new SceneManager(canvasRef.value);
 
-  // 基础效果：蒲公英
+  // 1. 蒲公英效果
   animationManager.addEffect("dandelions", DandelionEffect, { count: 15 });
+
+  // 2. 云朵效果 (画面上方 1/5 处，3-4 朵)
+  animationManager.addEffect("clouds", CloudEffect, { count: 4 });
 
   // 如果当前情绪比较"平静"或"宁静"，可以多加一点蒲公英
   if (currentGlobalMood.value === "宁静") {
