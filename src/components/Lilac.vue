@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { moodTypes } from "#/mood";
 import { resCheck, authCheck } from "#/check";
+import SceneManager from "~/core/SceneManager";
+import DandelionEffect from "~/effects/DandelionEffect";
 
 const props = defineProps({
   activeMoods: {
@@ -21,6 +23,7 @@ const onVideoLoaded = () => {
   }, 500);
 };
 const canvasRef = ref(null);
+let animationManager = null;
 
 const moods = moodTypes.map((m) => ({
   label: m.type,
@@ -127,8 +130,39 @@ const fetchOverview = async () => {
   }
 };
 
+const initAnimations = () => {
+  if (!canvasRef.value) {
+    return;
+  }
+
+  animationManager = new SceneManager(canvasRef.value);
+
+  // 基础效果：蒲公英
+  animationManager.addEffect("dandelions", DandelionEffect, { count: 15 });
+
+  // 如果当前情绪比较"平静"或"宁静"，可以多加一点蒲公英
+  if (currentGlobalMood.value === "宁静") {
+    animationManager.addEffect("dandelions_extra", DandelionEffect, {
+      count: 10,
+    });
+  }
+
+  animationManager.start();
+};
+
+const handleResize = () => {
+  animationManager?.onResize();
+};
+
 onMounted(() => {
   fetchOverview();
+  initAnimations();
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  animationManager?.dispose();
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 

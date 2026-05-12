@@ -112,6 +112,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
         "#": fileURLToPath(new URL("./src/utils", import.meta.url)),
+        "~": fileURLToPath(new URL("./src/animations", import.meta.url)),
       },
     },
     build: {
