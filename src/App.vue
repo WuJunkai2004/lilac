@@ -63,7 +63,9 @@ onMounted(() => {
     </nav>
   </div>
   <ConfirmDialog />
-  <Toast />
+  <Toast
+    :breakpoints="{ '640px': { width: '90vw', left: '5vw', right: '5vw' } }"
+  />
 </template>
 
 <style scoped>
