@@ -13,6 +13,13 @@ const props = defineProps({
 const globalMoodData = ref([]);
 const isLoading = ref(true);
 const isVideoLoaded = ref(false);
+
+const onVideoLoaded = () => {
+  // 视频加载完成后延迟隐藏占位图，确保视频已开始渲染，避免出现暂停图标
+  setTimeout(() => {
+    isVideoLoaded.value = true;
+  }, 500);
+};
 const canvasRef = ref(null);
 
 const moods = moodTypes.map((m) => ({
@@ -138,7 +145,7 @@ onMounted(() => {
         <img
           v-if="!isVideoLoaded"
           src="/lilac/background.webp"
-          class="absolute inset-0 w-full h-full object-cover z-0"
+          class="absolute inset-0 w-full h-full object-cover z-10"
         />
 
         <!-- 视频底层背景 -->
@@ -148,7 +155,7 @@ onMounted(() => {
           muted
           loop
           playsinline
-          @loadeddata="isVideoLoaded = true"
+          @loadeddata="onVideoLoaded"
           class="absolute inset-0 w-full h-full object-cover z-0"
         ></video>
 
