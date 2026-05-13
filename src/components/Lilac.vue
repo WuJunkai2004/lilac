@@ -27,13 +27,6 @@ const onVideoLoaded = () => {
 const canvasRef = ref(null);
 let animationManager = null;
 
-const moods = moodTypes.map((m) => ({
-  label: m.type,
-  icon: m.icon,
-  color: m.color,
-  quote: m.quote,
-}));
-
 const currentGlobalMood = computed(() => {
   if (globalMoodData.value.length === 0) return "宁静";
   const sorted = [...globalMoodData.value].sort((a, b) => b.count - a.count);
@@ -44,26 +37,6 @@ const moodIndex = computed(() => {
   if (globalMoodData.value.length === 0) return 0;
   const total = globalMoodData.value.reduce((acc, curr) => acc + curr.count, 0);
   return Math.min(99, Math.floor(total / 2) + 60);
-});
-
-const fusionStyle = computed(() => {
-  if (props.activeMoods.length === 0) return { background: "transparent" };
-
-  const colors = props.activeMoods.map((label) => {
-    return moods.find((m) => m.label === label)?.color;
-  });
-
-  if (colors.length === 1) {
-    return { background: `color-mix(in srgb, ${colors[0]}, transparent 85%)` };
-  }
-
-  const gradient = colors
-    .map((c) => `color-mix(in srgb, ${c}, transparent 80%)`)
-    .join(", ");
-  return {
-    background: `linear-gradient(135deg, ${gradient})`,
-    filter: "blur(40px)",
-  };
 });
 
 const fetchOverview = async () => {
@@ -150,7 +123,7 @@ onUnmounted(() => {
         <img
           v-if="!isVideoLoaded"
           src="/lilac/background.webp"
-          class="absolute inset-0 w-full h-full object-cover z-10"
+          class="absolute inset-0 w-full h-full object-cover z-1"
         />
 
         <!-- 视频底层背景 -->
@@ -164,13 +137,7 @@ onUnmounted(() => {
           class="absolute inset-0 w-full h-full object-cover z-0"
         ></video>
 
-        <!-- 背景融合效果 -->
-        <div
-          class="mood-fusion-layer absolute inset-0 transition-all duration-1000 z-1"
-          :style="fusionStyle"
-        ></div>
-
-        <!-- 未来 Three.js Canvas -->
+        <!-- Three.js Canvas -->
         <canvas
           ref="canvasRef"
           class="absolute inset-0 w-full h-full z-2 pointer-events-none"
