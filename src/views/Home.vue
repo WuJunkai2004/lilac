@@ -15,7 +15,9 @@ const moods = moodTypes.map((m) => ({
 }));
 
 const mixedQuote = computed(() => {
-  if (activeMoods.value.length === 0) return "";
+  if (activeMoods.value.length === 0) {
+    return "";
+  }
   if (activeMoods.value.length === 1) {
     return moods.find((m) => m.label === activeMoods.value[0])?.quote;
   }
@@ -27,7 +29,7 @@ const toggleMood = (mood) => {
   if (index > -1) {
     activeMoods.value.splice(index, 1);
   } else {
-    if (activeMoods.value.length >= 3) {
+    if (activeMoods.value.length >= 2) {
       activeMoods.value.shift();
     }
     activeMoods.value.push(mood.label);
@@ -61,7 +63,7 @@ onMounted(() => {
       </template>
     </PageHeader>
     <div class="home-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
-      <Lilac :active-moods="activeMoods" />
+      <Lilac :activeMoods="activeMoods" />
 
       <section class="mb-6">
         <div class="flex justify-content-between align-items-end mb-4">

@@ -46,42 +46,6 @@ const moodIndex = computed(() => {
   return Math.min(99, Math.floor(total / 2) + 60);
 });
 
-const moodBubbles = computed(() => {
-  if (globalMoodData.value.length === 0) {
-    return [
-      {
-        size: 100,
-        x: 20,
-        y: 30,
-        color: "var(--fuchsia-300)",
-        opacity: 0.6,
-        delay: "0s",
-      },
-      {
-        size: 150,
-        x: 60,
-        y: 10,
-        color: "var(--purple-200)",
-        opacity: 0.4,
-        delay: "1s",
-      },
-    ];
-  }
-
-  return globalMoodData.value.map((item, index) => {
-    const moodInfo =
-      moodTypes.find((m) => m.type === item.mood) || moodTypes[2];
-    return {
-      size: 60 + Math.min(item.count * 15, 120),
-      x: (index * 37 + 13) % 80,
-      y: (index * 23 + 17) % 60,
-      color: moodInfo.color,
-      opacity: 0.3 + Math.min(item.count * 0.05, 0.4),
-      delay: `${index * 0.7}s`,
-    };
-  });
-});
-
 const fusionStyle = computed(() => {
   if (props.activeMoods.length === 0) return { background: "transparent" };
 
@@ -100,19 +64,6 @@ const fusionStyle = computed(() => {
     background: `linear-gradient(135deg, ${gradient})`,
     filter: "blur(40px)",
   };
-});
-
-const bubbleStyle = (bubble) => ({
-  width: `${bubble.size}px`,
-  height: `${bubble.size}px`,
-  left: `${bubble.x}%`,
-  top: `${bubble.y}%`,
-  backgroundColor: bubble.color,
-  opacity: bubble.opacity,
-  position: "absolute",
-  borderRadius: "50%",
-  filter: "blur(25px)",
-  animation: `float 8s infinite ease-in-out ${bubble.delay}`,
 });
 
 const fetchOverview = async () => {
@@ -225,17 +176,6 @@ onUnmounted(() => {
           class="absolute inset-0 w-full h-full z-2 pointer-events-none"
         ></canvas>
 
-        <!-- 漂浮的气泡 (保留作为占位) -->
-        <template v-if="!isLoading">
-          <div
-            v-for="(bubble, index) in moodBubbles"
-            :key="index"
-            class="mood-bubble z-1"
-            :style="bubbleStyle(bubble)"
-          ></div>
-        </template>
-        <ProgressSpinner v-else style="width: 50px; height: 50px" class="z-3" />
-
         <div
           v-if="!isLoading"
           class="text-center z-3 relative flex flex-column align-items-center justify-content-center h-full"
@@ -258,10 +198,6 @@ onUnmounted(() => {
 <style scoped>
 :deep(.p-card-body) {
   padding: 0;
-}
-
-.mood-bubble {
-  pointer-events: none;
 }
 
 @keyframes float {
