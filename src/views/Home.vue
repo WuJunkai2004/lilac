@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { moodTypes } from "#/mood";
+import { moodTypes, getCombinationQuote } from "#/mood";
 
 const activeMoods = ref([]);
 const currentTime = ref(
@@ -21,7 +21,7 @@ const mixedQuote = computed(() => {
   if (activeMoods.value.length === 1) {
     return moods.find((m) => m.label === activeMoods.value[0])?.quote;
   }
-  return "心情在此刻交织。复杂的思绪最终会沉淀为最温柔的丁香回响。";
+  return getCombinationQuote(activeMoods.value[0], activeMoods.value[1]);
 });
 
 const toggleMood = (mood) => {
@@ -65,12 +65,25 @@ onMounted(() => {
     <div class="home-page flex-1 overflow-y-auto px-4 bg-fuchsia-50">
       <Lilac :activeMoods="activeMoods" />
 
-      <section class="mb-6">
-        <div class="flex justify-content-between align-items-end mb-4">
+      <section class="mb-2">
+        <div class="flex justify-content-between align-items-end mb-2">
           <h3 class="m-0 text-lg font-semibold text-gray-800">
             你现在的感觉如何？
           </h3>
           <span class="text-xs text-primary font-medium">点击图标融合心境</span>
+        </div>
+
+        <div
+          v-if="activeMoods.length > 0"
+          class="mb-4 p-4 surface-card border-round-2xl animate-fadein shadow-2 border-left-3 border-primary"
+        >
+          <div class="flex align-items-center mb-2">
+            <i class="pi pi-sparkles text-primary mr-2"></i>
+            <span class="text-sm font-bold text-primary">心情共鸣</span>
+          </div>
+          <p class="text-color-secondary italic m-0 line-height-3 text-sm">
+            "{{ mixedQuote }}"
+          </p>
         </div>
 
         <div class="grid px-1">
@@ -89,19 +102,6 @@ onMounted(() => {
           </div>
         </div>
       </section>
-
-      <div
-        v-if="activeMoods.length > 0"
-        class="mt-4 mb-4 p-4 surface-card border-round-2xl animate-fadein shadow-2 border-left-3 border-primary"
-      >
-        <div class="flex align-items-center mb-2">
-          <i class="pi pi-sparkles text-primary mr-2"></i>
-          <span class="text-sm font-bold text-primary">心情共鸣</span>
-        </div>
-        <p class="text-color-secondary italic m-0 line-height-3 text-sm">
-          "{{ mixedQuote }}"
-        </p>
-      </div>
     </div>
   </div>
 </template>
