@@ -1,11 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { moodTypes } from "#/mood";
 import { resCheck, authCheck } from "#/check";
-import SceneManager from "@/animations/core/SceneManager";
-import DandelionEffect from "@/animations/effects/DandelionEffect";
-import CloudEffect from "@/animations/effects/CloudEffect";
-import ThunderCloudEffect from "@/animations/effects/ThunderCloudEffect";
+import SceneManager from "~/core/SceneManager";
+import { loadMoodEffect } from "~/core/Moods";
 
 const props = defineProps({
   activeMoods: {
@@ -62,37 +59,38 @@ const initAnimations = () => {
   }
 
   animationManager = new SceneManager(canvasRef.value);
-
-  // 1. 蒲公英效果
-  animationManager.addEffect("dandelions", DandelionEffect, { count: 15 });
-
-  // 2. 云朵效果 (画面上方 1/5 处，3-4 朵)
-  animationManager.addEffect("clouds", CloudEffect, { count: 4 });
-
-  // 3. 雷云效果 (画面右上角，1朵)
-  animationManager.addEffect("thunder_cloud", ThunderCloudEffect);
-
-  // 如果当前情绪比较"平静"或"宁静"，可以多加一点蒲公英
-  if (currentGlobalMood.value === "宁静") {
-    animationManager.addEffect("dandelions_extra", DandelionEffect, {
-      count: 10,
-    });
-  }
-
+  updateAnimations();
   animationManager.start();
 };
 
-watch(currentGlobalMood, (newMood) => {
-  if (!animationManager) return;
-
-  if (newMood === "宁静") {
-    animationManager.addEffect("dandelions_extra", DandelionEffect, {
-      count: 10,
-    });
-  } else {
-    animationManager.removeEffect("dandelions_extra");
+const updateAnimations = () => {
+  if (!animationManager) {
+    return;
   }
-});
+
+  const moodsToLoad = new Set([...props.activeMoods, currentGlobalMood.value]);
+  const supportedMoods = ["忧郁", "放松", "愤怒", "宁静"];
+
+  supportedMoods.forEach((mood) => {
+    const effectData = loadMoodEffect(mood);
+    if (effectData) {
+      const [name, EffectClass, options] = effectData;
+      if (moodsToLoad.has(mood)) {
+        animationManager.addEffect(name, EffectClass, options);
+      } else {
+        animationManager.removeEffect(name);
+      }
+    }
+  });
+};
+
+watch(
+  [currentGlobalMood, () => props.activeMoods],
+  () => {
+    updateAnimations();
+  },
+  { deep: true },
+);
 
 const handleResize = () => {
   animationManager?.onResize();
