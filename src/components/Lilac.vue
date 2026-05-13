@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { moodTypes } from "#/mood";
 import { resCheck, authCheck } from "#/check";
 import SceneManager from "@/animations/core/SceneManager";
 import DandelionEffect from "@/animations/effects/DandelionEffect";
 import CloudEffect from "@/animations/effects/CloudEffect";
+import ThunderCloudEffect from "@/animations/effects/ThunderCloudEffect";
 
 const props = defineProps({
   activeMoods: {
@@ -144,6 +145,9 @@ const initAnimations = () => {
   // 2. 云朵效果 (画面上方 1/5 处，3-4 朵)
   animationManager.addEffect("clouds", CloudEffect, { count: 4 });
 
+  // 3. 雷云效果 (画面右上角，1朵)
+  animationManager.addEffect("thunder_cloud", ThunderCloudEffect);
+
   // 如果当前情绪比较"平静"或"宁静"，可以多加一点蒲公英
   if (currentGlobalMood.value === "宁静") {
     animationManager.addEffect("dandelions_extra", DandelionEffect, {
@@ -153,6 +157,18 @@ const initAnimations = () => {
 
   animationManager.start();
 };
+
+watch(currentGlobalMood, (newMood) => {
+  if (!animationManager) return;
+
+  if (newMood === "宁静") {
+    animationManager.addEffect("dandelions_extra", DandelionEffect, {
+      count: 10,
+    });
+  } else {
+    animationManager.removeEffect("dandelions_extra");
+  }
+});
 
 const handleResize = () => {
   animationManager?.onResize();
