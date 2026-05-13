@@ -100,6 +100,9 @@ onMounted(() => {
 });
 
 watch(currentChatType, () => {
+  if (!currentChatType.value) {
+    return;
+  }
   if (messages.value[currentChatType.value].length === 0) {
     fetchHistory();
   } else {
