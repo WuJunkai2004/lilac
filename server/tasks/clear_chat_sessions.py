@@ -65,7 +65,3 @@ def clear_chat_sessions():
             log("clear_chat_sessions").info(
                 f"清理任务执行完毕，共删除 {count} 个过期会话"
             )
-
-
-if __name__ == "__main__":
-    clear_chat_sessions()

@@ -46,9 +46,9 @@ def summary():
                 AIFeedback.select()
                 .join(MoodEntry)
                 .where(
-                    (MoodEntry.user_id == session.user_id) &
-                    (MoodEntry.log_date == log_date) &
-                    (AIFeedback.review_content != "今日总结还在生成中...")
+                    (MoodEntry.user_id == session.user_id)
+                    & (MoodEntry.log_date == log_date)
+                    & (AIFeedback.review_content != "今日总结还在生成中...")
                 )
                 .exists()
             )
@@ -195,7 +195,3 @@ def summary_mood(session: ChatSession) -> dict:
     except Exception:
         log("summary").error(f"总结会话 {session.id} 失败", exc_info=True)
         return {}
-
-
-if __name__ == "__main__":
-    summary()
