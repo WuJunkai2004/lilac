@@ -75,7 +75,7 @@ class MemoryCache:
 
     def init(self, default: Any) -> Tuple[Any, bool]:
         """
-        显式初始化或获取缓存。配合 singleCache 装饰器使用。
+        显式初始化或获取缓存。配合 enable 装饰器使用。
         :param default: 缓存不存在时的默认值（通常是 mutable 对象如 Counter()）
         :return: (缓存对象, 是否命中缓存)
         """
@@ -92,7 +92,7 @@ class MemoryCache:
         _current_cache_object.set(default)
         return default, False
 
-    def singleCache(self, expire: int = 3600, only_today: bool = False):
+    def enable(self, expire: int = 3600, only_today: bool = False):
         """
         装饰器：为函数建立显式缓存上下文。
         :param expire: 过期时间（秒）

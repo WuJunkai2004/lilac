@@ -133,7 +133,7 @@ def detail(
 
 
 @router.get("/overview")
-@cache.singleCache(expire=3600, only_today=True)
+@cache.enable(expire=3600, only_today=True)
 def overview(request: DataStrRequest = Query()) -> OverviewResponse:
     # 获取目标日期和昨天
     today = datetime.strptime(request.date, "%Y-%m-%d").date()

@@ -25,7 +25,7 @@ FastAPI app. Entry point: `server/main:app`. The `main.py` at root just calls `u
 | `server/api/` | Route modules, each using `APIRouter()`. Must be mounted in `server/main.py`. |
 | `server/schema/` | Pydantic models. Response schemas inherit `ResponseSchema[T]`; data shapes inherit `DataSchema` (both in `server/schema/base.py`). |
 | `server/database/` | Peewee models (`models.py`), SQLite connection singleton (`connect.py`), table/view creation + seed data (`setup.py`). DB file: `datas/lilac.db`. |
-| `server/utils/` | Shared utilities: `auth.py` (session-based, `get_current_user` dependency), `image.py` (webp conversion + DB registration), `file.py` (path constants via `folder` class), `agent.py` (external Agent API client), `cache.py` (in-memory cache with `singleCache` decorator). |
+| `server/utils/` | Shared utilities: `auth.py` (session-based, `get_current_user` dependency), `image.py` (webp conversion + DB registration), `file.py` (path constants via `folder` class), `agent.py` (external Agent API client), `cache.py` (in-memory cache with `enable` decorator). |
 | `server/tasks/` | Background periodic tasks (~1h interval). Auto-discovered — add a new `.py` file and use the `@register("name")` decorator from `server/tasks/register.py`. |
 
 ## Key Conventions
@@ -77,7 +77,8 @@ FastAPI app. Entry point: `server/main:app`. The `main.py` at root just calls `u
 ### Cache
 
 - In-memory cache via `server/utils/cache.py` (singleton `cache`).
-- Decorate with `@cache.singleCache(expire=3600, only_today=True)` and call `cache.init(default)` inside the function.
+- Decorate with `@cache.enable(expire=3600, only_today=True)` and call `cache.init(default)` inside the function.
+- **The `default` argument of `cache.init()` must be a mutable object** (e.g. `dict`, `list`, `Counter()`). `init` returns the same object reference — the caller is expected to populate it via in-place mutation, and the decorator persists that same object after the function returns. Passing an immutable object (e.g. `int`, `str`, `tuple`) means the caller cannot mutate it in place, so the cached value will always remain the initial default, defeating the cache entirely.
 
 ## Tooling
 
