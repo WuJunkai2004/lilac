@@ -132,6 +132,13 @@ export default class PaperPlaneEffect extends Effect {
   }
 
   update(time, { width, height }) {
+    if (!this.lastTime) this.lastTime = time;
+    const deltaTime = time - this.lastTime;
+    this.lastTime = time;
+
+    // 为了保持之前 60fps 调好的视觉速度，计算一个比率
+    const timeRatio = deltaTime / 16.666;
+
     this.planes.forEach((plane) => {
       if (!plane.startTimeSet) {
         plane.startTime = time + plane.initialDelay;
@@ -174,7 +181,7 @@ export default class PaperPlaneEffect extends Effect {
 
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.age += 16;
+      p.age += deltaTime; // 使用真实的流逝时间
       const lifeRatio = p.age / p.maxAge;
 
       if (lifeRatio >= 1) {
@@ -182,9 +189,9 @@ export default class PaperPlaneEffect extends Effect {
         continue;
       }
 
-      // 荡开逻辑：沿法线方向轻微扩散
-      p.pos.x += p.vx;
-      p.pos.y += p.vy;
+      // 荡开逻辑：沿法线方向轻微扩散，乘以 timeRatio 保证不同帧率下位移距离一致
+      p.pos.x += p.vx * timeRatio;
+      p.pos.y += p.vy * timeRatio;
 
       // 整体透明度随寿命减弱
       const instanceAlpha = 0.7 * (1 - lifeRatio);
