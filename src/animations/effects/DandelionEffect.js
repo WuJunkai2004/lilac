@@ -44,10 +44,10 @@ export default class DandelionEffect extends Effect {
     sprite.scale.set(scale, scale, 1);
 
     // 降低速度：vx 为主，vy 较小
-    // vx: 0.4 ~ 0.9 (之前最高 2.3)
-    // vy: 0.1 ~ 0.4 (之前最高 1.6)
+    // vx: 0.6 ~ 1.3
+    // vy: 0.1 ~ 0.4
     sprite.userData = {
-      vx: 0.4 + Math.random() * 0.5,
+      vx: 0.6 + Math.random() * 0.7,
       vy: 0.1 + Math.random() * 0.3,
       swingSpeed: 0.0008 + Math.random() * 0.0015,
       swingRange: 10 + Math.random() * 20,
@@ -57,23 +57,28 @@ export default class DandelionEffect extends Effect {
   }
 
   update(time, { width, height }) {
+    if (!this.lastTime) this.lastTime = time;
+    const deltaTime = time - this.lastTime;
+    this.lastTime = time;
+
+    const timeRatio = deltaTime / 16.666;
+
     this.sprites.forEach((sprite) => {
       const { vx, vy, swingSpeed, swingRange, rotationSpeed, offset } =
         sprite.userData;
 
-      // 基础位移
-      sprite.position.x += vx;
-      sprite.position.y += vy;
+      // 基础位移，乘以 timeRatio 保证位移速度不随帧率改变
+      sprite.position.x += vx * timeRatio;
+      sprite.position.y += vy * timeRatio;
 
       // 柔和的摆动
       sprite.position.x += Math.sin(time * swingSpeed + offset) * 0.2;
       sprite.position.y += Math.cos(time * swingSpeed * 0.7 + offset) * 0.15;
 
       // 旋转
-      sprite.material.rotation += rotationSpeed;
+      sprite.material.rotation += rotationSpeed * timeRatio;
 
-      // 边界检测：主要检测是否飘出右侧或过高
-      // 如果飘出右侧，或者 y 轴已经飘到了屏幕上半部分的一定高度（右中目标）
+      // 边界检测
       if (
         sprite.position.x > width / 2 + 100 ||
         sprite.position.y > height / 4
