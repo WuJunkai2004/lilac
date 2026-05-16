@@ -69,7 +69,7 @@ const updateAnimations = () => {
   }
 
   const moodsToLoad = new Set([...props.activeMoods, currentGlobalMood.value]);
-  const supportedMoods = ["忧郁", "放松", "愤怒", "宁静"];
+  const supportedMoods = ["忧郁", "放松", "愤怒", "宁静", "孤独"];
 
   supportedMoods.forEach((mood) => {
     const effectData = loadMoodEffect(mood);

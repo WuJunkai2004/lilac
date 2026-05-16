@@ -1,6 +1,7 @@
 import DandelionEffect from "~/effects/DandelionEffect";
 import CloudEffect from "~/effects/CloudEffect";
 import ThunderCloudEffect from "~/effects/ThunderCloudEffect";
+import PaperPlaneEffect from "~/effects/PaperPlaneEffect";
 
 const MoodEffects = {
   忧郁: {
@@ -29,6 +30,13 @@ const MoodEffects = {
     effect: DandelionEffect,
     options: {
       count: 20,
+    },
+  },
+  孤独: {
+    name: "paperplanes",
+    effect: PaperPlaneEffect,
+    options: {
+      count: 2,
     },
   },
 };
