@@ -39,8 +39,8 @@ FastAPI app. Entry point: `server/main:app`. The `main.py` at root just calls `u
 ### Responses
 
 - Every route returns a **specific** `ResponseSchema[T]` subclass (e.g. `ShareResponse`, `ChatResponse`), never bare `ResponseSchema`.
-- Success: `ShareResponse(success=True, data=ShareData(...))`.
-- Error: `ShareResponse(success=False, code=400, message="...")` — always the same concrete subclass, never a different type.
+- Success: `ShareResponse(success=True, data=ShareData(...))`. Do not assign `code`, but can optionally include a `message` (e.g. for warnings or extra info).
+- Error: `ShareResponse(success=False, code=400, message="...")` — always the same concrete subclass, never a different type, but with `success=False` and an appropriate `code` (400 for client errors, 500 for server errors). The `data` field is omitted in error responses.
 
 ### Images
 

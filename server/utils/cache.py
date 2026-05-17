@@ -3,12 +3,15 @@ import time
 from datetime import date
 from functools import wraps
 from threading import Lock
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, ParamSpec, Tuple, TypeVar
 
 # 上下文变量，用于在装饰器和 init 之间同步缓存状态
 _current_cache_key = contextvars.ContextVar("_current_cache_key", default=None)
 _current_cache_options = contextvars.ContextVar("_current_cache_options", default=None)
 _current_cache_object = contextvars.ContextVar("_current_cache_object", default=None)
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
 
 class MemoryCache:
@@ -92,16 +95,18 @@ class MemoryCache:
         _current_cache_object.set(default)
         return default, False
 
-    def enable(self, expire: int = 3600, only_today: bool = False):
+    def enable(
+        self, expire: int = 3600, only_today: bool = False
+    ) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
         """
         装饰器：为函数建立显式缓存上下文。
         :param expire: 过期时间（秒）
         :param only_today: 是否仅当天有效（跨零点失效）
         """
 
-        def decorator(func: Callable):
+        def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
             @wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
                 # 1. 生成唯一 Key
                 key = self._generate_key(func, args, kwargs)
 

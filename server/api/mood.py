@@ -18,6 +18,7 @@ from server.schema.mood import (
 )
 from server.utils.auth import get_current_user
 from server.utils.cache import cache
+from server.utils.default import get_recommendation
 from server.utils.logger import log
 
 router = APIRouter()
@@ -95,7 +96,7 @@ def calendar(
     ]
 
     return CalendarResponse(
-        success=True, code=200, message="success", data=CalendarMoodData(day_mood_list)
+        success=True, message="success", data=CalendarMoodData(day_mood_list)
     )
 
 
@@ -106,23 +107,39 @@ def detail(
     if not user:
         return DetailResponse(success=False, code=401, message="未登录")
 
+    default_rec: tuple[str, str] = get_recommendation(request.date) or ("", "")
+
     # 查询该用户在该日期的情绪记录
     mood_entry = MoodEntry.get_or_none(
         MoodEntry.user_id == user.id, MoodEntry.log_date == request.date
     )
 
     if not mood_entry:
-        return DetailResponse(success=False, code=404, message="未找到该日期的记录")
-
+        return DetailResponse(
+            success=True,
+            message="未找到该日期的记录，以下是系统推荐",
+            data=DetailData(
+                summary="",
+                activity=default_rec[0],
+                food=default_rec[1],
+            ),
+        )
     # 查询对应的 AI 反馈
     ai_feedback = AIFeedback.get_or_none(AIFeedback.mood_entry_id == mood_entry.id)
 
     if not ai_feedback:
-        return DetailResponse(success=False, code=404, message="总结生成中或未找到总结")
+        return DetailResponse(
+            success=True,
+            message="未找到该日期的 AI 总结，以下是系统推荐",
+            data=DetailData(
+                summary="",
+                activity=default_rec[0],
+                food=default_rec[1],
+            ),
+        )
 
     return DetailResponse(
         success=True,
-        code=200,
         message="success",
         data=DetailData(
             summary=ai_feedback.review_content,
@@ -148,7 +165,6 @@ def overview(request: DataStrRequest = Query()) -> OverviewResponse:
         data = [OverviewData(mood=mood, count=count) for mood, count in counts.items()]
         return OverviewResponse(
             success=True,
-            code=200,
             message="success (cached)",
             data=OverviewListData(data),
         )
@@ -178,7 +194,6 @@ def overview(request: DataStrRequest = Query()) -> OverviewResponse:
 
     return OverviewResponse(
         success=True,
-        code=200,
         message="success",
         data=OverviewListData(data),
     )

@@ -7,7 +7,7 @@ from server.utils.logger import log
 
 
 @cache.enable(expire=6 * 3600, only_today=True)
-def get_default_recommendation(date_str: str) -> Optional[tuple[str, str]]:
+def get_recommendation(date_str: str) -> Optional[tuple[str, str]]:
     """
     获取指定日期的默认推荐（活动, 美食）。
     使用缓存，有效期 6 小时，仅限当天。
