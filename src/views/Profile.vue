@@ -9,7 +9,7 @@ import imageLoader from "#/imageLoader";
 const router = useRouter();
 const user = ref(null);
 const cachedAvatar = ref("");
-const { awaitAlert } = useAlert();
+const { awaitAlert, shows } = useAlert();
 
 const updateCachedAvatar = async (url) => {
   if (url) {
@@ -106,6 +106,7 @@ const loadUser = async () => {
     })
     .catch(async (error) => {
       console.error("加载个人资料失败:", error);
+      shows("加载失败", "个人资料无法获取，已展示本地信息", "warn");
       // 降级处理：仅展示基础信息
       user.value = {
         username: await storage.get("user"),

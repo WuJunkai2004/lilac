@@ -35,6 +35,9 @@ const takePhoto = async (source = CameraSource.Camera) => {
     capturedImage.value = image.webPath;
   } catch (error) {
     console.error("Camera failed:", error);
+    if (error.message !== "User cancelled photos app") {
+      shows("相机开启失败", "请检查相机权限或设备状态", "error");
+    }
   }
 };
 

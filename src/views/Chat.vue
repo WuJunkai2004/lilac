@@ -92,6 +92,7 @@ const fetchHistory = async () => {
     })
     .catch((error) => {
       console.error("获取历史记录失败:", error);
+      shows("加载失败", "无法获取历史对话", "error");
     });
 };
 

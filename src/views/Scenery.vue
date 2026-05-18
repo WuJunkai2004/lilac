@@ -4,8 +4,9 @@ import { useRouter } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import imageLoader from "#/imageLoader";
-import LetterCover from "../components/LetterCover.vue";
+import { useAlert } from "#/alert";
 
+const { shows } = useAlert();
 const router = useRouter();
 const selectedLetter = ref(null);
 const showDetails = ref(false);
@@ -72,6 +73,7 @@ const fetchLetters = async () => {
     })
     .catch((error) => {
       console.error("Fetch error:", error);
+      shows("加载失败", "无法获取信笺数据", "error");
     });
 };
 

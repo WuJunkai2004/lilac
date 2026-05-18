@@ -3,7 +3,9 @@ import { ref, watch } from "vue";
 import storage from "#/storage";
 import { resCheck, authCheck } from "#/check";
 import imageLoader from "#/imageLoader";
+import { useAlert } from "#/alert";
 
+const { shows } = useAlert();
 const visible = defineModel("visible", { type: Boolean, default: false });
 const props = defineProps({
   letter: {
@@ -46,7 +48,7 @@ const handleLike = async () => {
 
   const token = await storage.get("token");
   if (!token) {
-    console.error("未登录，无法点赞");
+    shows("未登录", "请先登录后再点赞", "warn");
     return;
   }
 
@@ -76,6 +78,7 @@ const handleLike = async () => {
     })
     .catch((error) => {
       console.error("点赞失败:", error);
+      shows("操作失败", "点赞不成功，请稍后再试", "error");
     })
     .finally(() => {
       loading.value = false;
@@ -91,6 +94,7 @@ const handleShare = async () => {
     await sharePreviewRef.value.share(letterRef.value);
   } catch (error) {
     console.error("生成图片失败:", error);
+    shows("分享失败", "生成分享预览图失败", "error");
   }
 };
 </script>

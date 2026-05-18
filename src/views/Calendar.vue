@@ -67,8 +67,6 @@ const loadMoodDetail = async () => {
     return;
   }
   const selectedDay = calenderRef.value.getSelectedDay();
-  console.log("Selected day:", selectedDay);
-  console.log("the mood data for the day:", moodData.value[selectedDay]);
   const dateStr = calenderRef.value.getSelectedDateStr();
 
   if (!isExperienced() || !moodData.value[selectedDay]) {

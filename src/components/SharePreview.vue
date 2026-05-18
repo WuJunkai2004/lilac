@@ -3,7 +3,9 @@ import { ref } from "vue";
 import { toPng } from "html-to-image";
 import { Share } from "@capacitor/share";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { useAlert } from "#/alert";
 
+const { shows } = useAlert();
 const imageUrl = ref(null);
 
 const share = async (element) => {
@@ -23,6 +25,7 @@ const share = async (element) => {
     return dataUrl;
   } catch (error) {
     console.error("生成图片失败:", error);
+    shows("生成失败", "预览图生成失败", "error");
     throw error;
   }
 };
@@ -68,7 +71,9 @@ const handleShare = async () => {
     });
   } catch (error) {
     console.error("分享失败:", error);
-    // 如果用户取消分享，通常会进入这里，可以不做特别处理
+    if (error.message !== "Share canceled") {
+      shows("分享失败", "请检查网络或权限", "error");
+    }
   }
 };
 </script>

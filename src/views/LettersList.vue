@@ -4,7 +4,9 @@ import { useRouter, useRoute } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
 import imageLoader from "#/imageLoader";
+import { useAlert } from "#/alert";
 
+const { shows } = useAlert();
 const route = useRoute();
 const router = useRouter();
 const selectedLetter = ref(null);
@@ -79,6 +81,7 @@ const fetchLetters = async (isNewSearch = false) => {
     })
     .catch((error) => {
       console.error("Fetch error:", error);
+      shows("加载失败", "无法获取信笺列表", "error");
     })
     .finally(() => {
       loading.value = false;
