@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { resCheck, authCheck } from "#/check";
 import storage from "#/storage";
@@ -12,7 +12,13 @@ const router = useRouter();
 const currentChatType = ref("daily");
 const userInput = ref("");
 const isTyping = ref(false);
+const isStreaming = ref(false);
+let interruptStreaming = null;
 const messageContainer = ref(null);
+
+onUnmounted(() => {
+  if (interruptStreaming) interruptStreaming();
+});
 
 const chatOptions = [
   { label: "今日", value: "daily" },
@@ -150,6 +156,12 @@ const confirmClearHistory = async () => {
 };
 
 const sendMessage = async () => {
+  // 如果正在流式输出，点击发送则立即完成当前输出
+  if (isStreaming.value && interruptStreaming) {
+    interruptStreaming();
+    await nextTick();
+  }
+
   if (!userInput.value.trim() || isTyping.value) return;
 
   const token = await storage.get("token");
@@ -186,19 +198,50 @@ const sendMessage = async () => {
   })
     .then(resCheck)
     .then(authCheck)
-    .then((res) => {
+    .then(async (res) => {
       isTyping.value = false;
-      if (res.success && res.data) {
-        const aiMsg = {
-          role: res.data.role,
-          content: res.data.content,
-          time: formatTime(res.data.created_at),
-        };
-        messages.value[currentChatType.value].push(aiMsg);
-        scrollToBottom();
-      } else {
+      if(!res.success || !res.data) {
         shows("发送失败", res.message || "服务器异常", "error");
+        return;
       }
+      isStreaming.value = true;
+      const fullContent = res.data.content || "";
+      const aiMsg = {
+        role: res.data.role,
+        content: "",
+        time: formatTime(res.data.created_at),
+      };
+      messages.value[currentChatType.value].push(aiMsg);
+
+      // 创建一个可被外部中断的 Promise
+      let resolveStream;
+      const streamPromise = new Promise((resolve) => {
+        resolveStream = resolve;
+        interruptStreaming = () => {
+          aiMsg.content = fullContent;
+          resolve();
+        };
+      });
+
+      // 模拟流式输出效果
+      for (let i = 1; i <= fullContent.length; i++) {
+        if (aiMsg.content === fullContent) break;
+
+        aiMsg.content = fullContent.substring(0, i);
+        if (i % 5 === 0 || i === fullContent.length) {
+          await nextTick();
+          scrollToBottom();
+        }
+        await Promise.race([
+          new Promise((resolve) => setTimeout(resolve, 15)),
+          streamPromise,
+        ]);
+      }
+
+      isStreaming.value = false;
+      interruptStreaming = null;
+      resolveStream();
+      scrollToBottom();
     })
     .catch((error) => {
       isTyping.value = false;
@@ -276,7 +319,7 @@ const sendMessage = async () => {
         </div>
 
         <div
-          v-if="isTyping"
+          v-if="isTyping && !isStreaming"
           class="message-bubble p-3 max-w-85 shadow-2 transition-all self-start bg-surface-0 text-surface-900 border-round-right-2xl border-round-top-2xl"
         >
           <span class="animate-pulse flex align-items-center">
