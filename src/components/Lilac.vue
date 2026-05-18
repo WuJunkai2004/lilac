@@ -14,12 +14,23 @@ const props = defineProps({
 const globalMoodData = ref([]);
 const isLoading = ref(true);
 const isVideoLoaded = ref(false);
+const videoRef = ref(null);
 
 const onVideoLoaded = () => {
-  // 视频加载完成后延迟隐藏占位图，确保视频已开始渲染，避免出现暂停图标
-  setTimeout(() => {
-    isVideoLoaded.value = true;
-  }, 500);
+  // 视频加载完成后，必须等到视频真正开始播放（currentTime > 0）再隐藏占位图
+  // 避免在某些平台上虽然 loadeddata 触发但因自动播放限制等原因未实际播放导致黑屏
+  const checkPlaying = () => {
+    if (videoRef.value && videoRef.value.currentTime > 0) {
+      // 已经开始播放，再延迟一小会儿确保渲染稳定
+      setTimeout(() => {
+        isVideoLoaded.value = true;
+      }, 500);
+    } else if (videoRef.value) {
+      // 继续轮询
+      requestAnimationFrame(checkPlaying);
+    }
+  };
+  checkPlaying();
 };
 const canvasRef = ref(null);
 let animationManager = null;
@@ -126,6 +137,7 @@ onUnmounted(() => {
 
         <!-- 视频底层背景 -->
         <video
+          ref="videoRef"
           src="/lilac/background.mp4"
           autoplay
           muted
