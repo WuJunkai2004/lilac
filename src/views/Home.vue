@@ -66,23 +66,16 @@ onMounted(() => {
       <Lilac :activeMoods="activeMoods" />
 
       <section class="mb-2">
-        <div class="flex justify-content-between align-items-end mb-2">
-          <h3 class="m-0 text-lg font-semibold text-gray-800">
-            你现在的感觉如何？
-          </h3>
-          <span class="text-xs text-primary font-medium">点击图标融合心境</span>
-        </div>
-
         <div
-          v-if="activeMoods.length > 0"
           class="mb-4 p-4 surface-card border-round-2xl animate-fadein shadow-2 border-left-3 border-primary"
         >
           <div class="flex align-items-center mb-2">
             <i class="pi pi-sparkles text-primary mr-2"></i>
-            <span class="text-sm font-bold text-primary">心情共鸣</span>
+            <span v-if="activeMoods.length > 0" class="text-sm font-bold text-primary">心情共鸣</span>
+            <span v-else class="text-sm font-bold text-primary">点击图标融合心情</span>
           </div>
           <p class="text-color-secondary italic m-0 line-height-3 text-sm">
-            "{{ mixedQuote }}"
+            "{{ activeMoods.length > 0 ? mixedQuote : '你现在的感觉如何？' }}"
           </p>
         </div>
 

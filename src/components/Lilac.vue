@@ -110,7 +110,7 @@ onUnmounted(() => {
 
 <template>
   <Card
-    class="mood-visualization-container mb-6 border-round-3xl overflow-hidden shadow-4 bg-transparent p-0"
+    class="mood-visualization-container mb-4 border-round-3xl overflow-hidden shadow-4 bg-transparent p-0"
   >
     <template #content>
       <div
