@@ -99,8 +99,9 @@ onMounted(() => {
   fetchHistory();
 });
 
-watch(currentChatType, () => {
-  if (!currentChatType.value) {
+watch(currentChatType, (newVal, oldVal) => {
+  if (!newVal) {
+    currentChatType.value = oldVal || "daily";
     return;
   }
   if (messages.value[currentChatType.value].length === 0) {
@@ -222,6 +223,7 @@ const sendMessage = async () => {
             optionValue="value"
             aria-labelledby="basic"
             size="small"
+            :allowEmpty="false"
           />
           <Button
             icon="pi pi-trash"
